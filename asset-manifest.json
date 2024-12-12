@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/static/css/main.703d9d2c.css",
+    "main.js": "/static/js/main.f30bb077.js",
+    "static/js/453.acca0757.chunk.js": "/static/js/453.acca0757.chunk.js",
+    "static/media/portfolio_img.webp": "/static/media/portfolio_img.181f22cbf78e8806615c.webp",
+    "static/media/sppuLogo.webp": "/static/media/sppuLogo.0fcb47e5518916909609.webp",
+    "static/media/neuLogo.webp": "/static/media/neuLogo.f61fcfff8ff8113b55ee.webp",
+    "static/media/Yashdeep_logo.webp": "/static/media/Yashdeep_logo.1a76dc7464b5e675d704.webp",
+    "static/media/SST_symbol.webp": "/static/media/SST_symbol.ae9a06a13df518ab3948.webp",
+    "index.html": "/index.html",
+    "main.703d9d2c.css.map": "/static/css/main.703d9d2c.css.map",
+    "main.f30bb077.js.map": "/static/js/main.f30bb077.js.map",
+    "453.acca0757.chunk.js.map": "/static/js/453.acca0757.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.703d9d2c.css",
+    "static/js/main.f30bb077.js"
+  ]
+}
