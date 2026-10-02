@@ -170,3 +170,10 @@ body {
   background-repeat: repeat;
   background-size: 128px;
 }
+
+/* The nav's hamburger must never render on desktop. Tailwind's `.flex` out-ordered `.md:hidden`,
+   and an inline `display:flex` out-ranked both, so the button showed at 1440px and opened a
+   ~1400px-wide panel over the hero. !important here beats inline styles too. */
+@media (min-width: 768px) {
+  .mobile-only { display: none !important; }
+}

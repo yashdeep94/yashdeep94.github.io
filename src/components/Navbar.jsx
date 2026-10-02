@@ -84,7 +84,7 @@ const Navbar = () => {
               width: '40px', height: '40px', borderRadius: '12px',
               border: `1px solid ${dk ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
               background: dk ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              alignItems: 'center', justifyContent: 'center',
               color: dk ? '#fbbf24' : '#6366f1',
               cursor: 'pointer', transition: 'all 0.3s ease',
             }}
@@ -94,7 +94,7 @@ const Navbar = () => {
 
           {/* Mobile menu btn */}
           <button
-            className="md:hidden"
+            className="md:hidden mobile-only flex"
             onClick={() => setMobileOpen(!mobileOpen)}
             style={{
               width: '40px', height: '40px', borderRadius: '12px',
@@ -113,12 +113,12 @@ const Navbar = () => {
       {/* Mobile menu */}
       {mobileOpen && (
         <div
-          className="md:hidden glass animate-fade-up"
+          className="md:hidden mobile-only flex flex-col glass animate-fade-up"
           style={{
             margin: '12px 16px 0', padding: '16px', borderRadius: '16px',
             border: `1px solid ${dk ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
             background: dk ? 'rgba(3,7,18,0.95)' : 'rgba(255,255,255,0.95)',
-            display: 'flex', flexDirection: 'column', gap: '4px',
+            gap: '4px',
           }}
         >
           {navLinks.map(link => {

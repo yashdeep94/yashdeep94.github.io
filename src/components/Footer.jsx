@@ -55,11 +55,11 @@ const Footer = () => {
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                color: dk ? '#6b7280' : '#9ca3af',
+                color: dk ? '#6b7280' : '#6b7280',
                 transition: 'color 0.3s',
               }}
               onMouseEnter={e => e.currentTarget.style.color = '#6366f1'}
-              onMouseLeave={e => e.currentTarget.style.color = dk ? '#6b7280' : '#9ca3af'}
+              onMouseLeave={e => e.currentTarget.style.color = dk ? '#6b7280' : '#6b7280'}
               aria-label={label}
             >
               <Icon size={18} />
@@ -70,7 +70,7 @@ const Footer = () => {
         {/* Copyright */}
         <p style={{
           fontSize: '13px',
-          color: dk ? '#4b5563' : '#9ca3af',
+          color: dk ? '#4b5563' : '#6b7280',
           display: 'flex', alignItems: 'center', gap: '6px',
         }}>
           Built with <Heart size={12} style={{ color: '#ef4444' }} /> by {personalInfo.name}

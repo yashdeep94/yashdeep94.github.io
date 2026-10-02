@@ -42,7 +42,7 @@ const Apps = () => {
             Useful <span className="gradient-text">Mini Apps</span>
           </h1>
           <p style={{
-            fontSize: '17px', color: dk ? '#6b7280' : '#9ca3af',
+            fontSize: '17px', color: dk ? '#6b7280' : '#6b7280',
             maxWidth: '550px', margin: '0 auto', lineHeight: 1.7,
           }}>
             Handy developer tools I've built — each showcasing different skills and technologies.
@@ -140,7 +140,7 @@ const Apps = () => {
                     Launch App <ArrowRight size={16} />
                   </Link>
                 ) : (
-                  <span style={{ fontSize: '14px', fontWeight: 500, color: dk ? '#4b5563' : '#9ca3af' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: dk ? '#4b5563' : '#6b7280' }}>
                     Coming soon...
                   </span>
                 )}
@@ -165,7 +165,7 @@ const Apps = () => {
           }}>
             More apps coming soon!
           </p>
-          <p style={{ fontSize: '14px', color: dk ? '#6b7280' : '#9ca3af' }}>
+          <p style={{ fontSize: '14px', color: dk ? '#6b7280' : '#6b7280' }}>
             I'm building new tools regularly. Check back or follow my GitHub for updates.
           </p>
         </div>

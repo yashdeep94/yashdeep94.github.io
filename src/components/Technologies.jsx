@@ -63,7 +63,7 @@ const Technologies = () => {
             Technologies I <span className="gradient-text">Work With</span>
           </h2>
           <p style={{
-            fontSize: '16px', color: dk ? '#6b7280' : '#9ca3af',
+            fontSize: '16px', color: dk ? '#6b7280' : '#6b7280',
             maxWidth: '500px', margin: '12px auto 0',
           }}>
             My toolkit for building modern, scalable applications
@@ -73,7 +73,7 @@ const Technologies = () => {
         {/* Tech Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', alignItems: 'start',
           gap: '24px',
         }}>
           {technologies.map((cat, i) => {

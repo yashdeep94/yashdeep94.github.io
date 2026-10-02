@@ -7,12 +7,11 @@ export const personalInfo = {
     "AI & ML Engineer",
     "Problem Solver",
   ],
-  bio: "Cloud Engineer & Full Stack Developer shipping production apps on bare metal, DigitalOcean, and AWS. From Django + React to Terraform infrastructure and GPU-accelerated ML pipelines I build end-to-end. Currently a Cloud Engineering Co-op.",
-  email: "darekar.y@northeastern.edu",
+  bio: "Cloud Engineer & Full Stack Developer shipping production apps on bare metal, DigitalOcean, and AWS. From Django + React to Terraform infrastructure and GPU-accelerated ML pipelines I build end-to-end. MS Information Systems at Northeastern, graduating December 2026.",
+  email: "yashdevdarekar94@gmail.com",
   location: "Boston, MA",
-  linkedin: "https://linkedin.com/in/yash-darekar-b69618222",
+  linkedin: "https://linkedin.com/in/yashdarekar",
   github: "https://github.com/yashdeep94",
-  resumeUrl: "/resume.pdf",
 };
 
 // ===== TECHNOLOGIES =====

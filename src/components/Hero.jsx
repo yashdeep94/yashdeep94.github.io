@@ -80,7 +80,7 @@ const Hero = () => {
 
   return (
     <section style={{
-      height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       position: 'relative', overflow: 'hidden',
       padding: '56px 20px 36px',
     }}>
@@ -164,7 +164,7 @@ const Hero = () => {
             border: `1px solid ${dk ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.15)'}`,
           }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
-            Available for opportunities
+            Available February 2027
           </span>
         </div>
 
@@ -219,11 +219,11 @@ const Hero = () => {
           style={{
             opacity: 0, display: 'flex', alignItems: 'center',
             gap: '6px', fontSize: 'clamp(12px, 1.3vw, 14px)',
-            color: dk ? '#6b7280' : '#9ca3af',
+            color: dk ? '#6b7280' : '#6b7280',
           }}
         >
           <MapPin size={14} />
-          {personalInfo.location}
+          {personalInfo.location} · open to relocation
         </div>
 
         {/* Social Icons */}
@@ -273,11 +273,11 @@ const Hero = () => {
           style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
             background: 'none', border: 'none', cursor: 'pointer',
-            color: dk ? '#4b5563' : '#9ca3af',
+            color: dk ? '#4b5563' : '#6b7280',
             transition: 'color 0.3s',
           }}
           onMouseEnter={e => e.currentTarget.style.color = '#6366f1'}
-          onMouseLeave={e => e.currentTarget.style.color = dk ? '#4b5563' : '#9ca3af'}
+          onMouseLeave={e => e.currentTarget.style.color = dk ? '#4b5563' : '#6b7280'}
         >
           <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 500 }}>Scroll</span>
           <ChevronDown size={18} />

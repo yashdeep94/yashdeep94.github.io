@@ -1,10 +1,19 @@
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import AnimatedBackground from './components/AnimatedBackground';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Apps from './pages/Apps';
+
+// Route changes must reset scroll position. Navigating from a scrolled Home to /apps was
+// landing the visitor at y=695: past the heading, in the middle of the card grid.
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+};
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -26,6 +35,7 @@ const AppContent = () => {
         <AnimatedBackground />
         <Navbar />
         <main>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/apps" element={<Apps />} />
