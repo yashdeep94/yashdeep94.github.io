@@ -84,7 +84,7 @@ const Navbar = () => {
               width: '40px', height: '40px', borderRadius: '12px',
               border: `1px solid ${dk ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
               background: dk ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-              alignItems: 'center', justifyContent: 'center',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: dk ? '#fbbf24' : '#6366f1',
               cursor: 'pointer', transition: 'all 0.3s ease',
             }}

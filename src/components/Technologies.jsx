@@ -72,9 +72,8 @@ const Technologies = () => {
 
         {/* Tech Grid */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', alignItems: 'start',
-          gap: '24px',
+          columnWidth: '320px',
+          columnGap: '24px',
         }}>
           {technologies.map((cat, i) => {
             const Icon = catIcons[cat.name] || Code2;
@@ -87,6 +86,8 @@ const Technologies = () => {
                 style={{
                   opacity: 0,
                   animationDelay: `${0.1 + i * 0.1}s`,
+                  breakInside: 'avoid',
+                  marginBottom: '24px',
                   padding: '28px',
                   borderRadius: '20px',
                   background: dk ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)',
