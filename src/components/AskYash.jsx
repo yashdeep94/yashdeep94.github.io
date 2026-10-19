@@ -212,16 +212,25 @@ const AskYash = () => {
   const inputRef = useRef(null);
 
   const scrollerRef = useRef(null);
-  const stickRef = useRef(true);
-  const onScroll = () => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
-  };
+  const anchorRef = useRef(null);      // the question the current answer belongs to
+  const pinnedFor = useRef(-1);
+
+  // ── SCROLL. ⛔ Do NOT follow the text as it streams. Yash, after using it: "it also scrolls
+  //    down with text I want it to stay there as user needs to scroll back again to read it."
+  //    Following the tail means the visitor only ever sees the last two lines being written and
+  //    has to scroll back up to read the answer from its beginning, which is the opposite of
+  //    helpful on a 1,300-character answer.
+  //
+  //    Instead: when a new question is sent, scroll THAT question to the top of the panel once,
+  //    so the answer renders into the empty space below it and reads top-down like a page. Then
+  //    leave the scroll position completely alone while tokens arrive.
   useEffect(() => {
-    if (!stickRef.current) return;
-    endRef.current?.scrollIntoView({ block: 'end' });
-  }, [msgs, busy]);
+    const lastUser = msgs.map((m, i) => (m.role === 'user' ? i : -1)).filter((i) => i >= 0).pop();
+    if (lastUser === undefined || lastUser === pinnedFor.current) return;
+    pinnedFor.current = lastUser;
+    requestAnimationFrame(() => anchorRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+  }, [msgs]);
+
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
   // Re-check on open and after a load, so the footer reflects reality rather than this session.
   useEffect(() => { if (open) modelCached().then(setCached); }, [open, load]);
@@ -468,7 +477,6 @@ const AskYash = () => {
 
           <div
             ref={scrollerRef}
-            onScroll={onScroll}
             style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: '15px 15px 4px' }}
           >
             {msgs.length === 0 && (
@@ -533,9 +541,15 @@ const AskYash = () => {
               </div>
             )}
 
-            {msgs.map((m, i) => (
-              <Bubble key={i} role={m.role} text={m.content} dk={dk} streaming={m.streaming} />
-            ))}
+            {msgs.map((m, i) => {
+              const lastUser = m.role === 'user'
+                && !msgs.slice(i + 1).some((x) => x.role === 'user');
+              return (
+                <div key={i} ref={lastUser ? anchorRef : undefined} style={{ scrollMarginTop: 2 }}>
+                  <Bubble role={m.role} text={m.content} dk={dk} streaming={m.streaming} />
+                </div>
+              );
+            })}
 
             {busy && load && (
               <div style={{ padding: '4px 2px 14px' }}>
@@ -569,7 +583,9 @@ const AskYash = () => {
                 ))}
               </div>
             )}
-            <div ref={endRef} />
+            {/* Tail padding, so a short answer can still sit at the top of the panel after the
+                question is pinned there. Without it the browser cannot scroll far enough. */}
+            <div ref={endRef} style={{ minHeight: '60%' }} />
           </div>
 
           <form
