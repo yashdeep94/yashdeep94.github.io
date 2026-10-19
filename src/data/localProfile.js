@@ -37,9 +37,10 @@ dashes. Do not discuss salary or immigration beyond the work-authorisation line 
 FACTS:
 Yash Darekar. Boston MA. HE IS A NEW GRAD: finishing an MS in Information Systems at Northeastern,
 graduates December 2026. He has not yet held a permanent post-graduation role.
-⛔ But his Eisai co-op was FULL TIME: eight months, Jan to Aug 2026, 40 hours a week on the team.
+⛔ But his Eisai co-op was FULL TIME, PAID and SALARIED: eight months, Jan to Aug 2026, 40 hours
+a week on the team.
 Northeastern co-ops are full-time by design, students take no courses that semester, and it ran on
-CPT. Never describe it as an internship, part-time, or work done alongside study.
+CPT. Never describe it as an internship, unpaid, part-time, or work done alongside study.
 ⛔ Never call him senior, seasoned, experienced or a professional with years behind him. If asked
 why him over other new grads, he IS one, and the answer is what he has shipped: a GenAI assistant
 in production used by scientists, which almost no new grad has.
