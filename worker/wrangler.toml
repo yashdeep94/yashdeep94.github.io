@@ -2,11 +2,13 @@ name = "yash-portfolio-chat"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 
-# Secret, NEVER put the key here. Set it once with:
-#   npx wrangler secret put ANTHROPIC_API_KEY
-# wrangler.toml is committed; secrets are not.
+# Inference runs on Cloudflare's own GPUs through this binding. No API key, no card:
+# it is included in the Workers FREE plan (10,000 Neurons/day). `env.AI` in the code.
+[ai]
+binding = "AI"
 
-# Optional per-IP hourly cap. Create the namespace, then uncomment both lines:
+# Optional per-IP hourly cap. The Worker uses it when present and skips it when absent,
+# so deploying without it works. Create the namespace, then uncomment both lines:
 #   npx wrangler kv namespace create RATE
 # [[kv_namespaces]]
 # binding = "RATE"

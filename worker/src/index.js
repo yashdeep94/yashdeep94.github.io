@@ -1,22 +1,37 @@
 // Cloudflare Worker — the backend for the portfolio chat assistant.
 //
-// 🚨 WHY THIS EXISTS AT ALL. The portfolio is a static Vite build on GitHub Pages. A static site
-//    cannot call the Anthropic API directly: the key would sit in the JS bundle, and anyone who
-//    opens DevTools can read it and spend his money. There is no "hide it in an env var" that
-//    survives `vite build` — VITE_ vars are INLINED INTO THE BUNDLE. The key has to live on a
-//    server, and this is the smallest one that will do.
+// 🚨 WHY THIS EXISTS AT ALL. The portfolio is a static Vite build on GitHub Pages, and a static
+//    site cannot hold an API credential: `vite build` INLINES every VITE_ variable into the JS
+//    bundle, so anything the frontend knows, a visitor with DevTools knows. Inference has to
+//    happen somewhere that is not the bundle.
+//
+// 💰 IT COSTS NOTHING. Inference runs on Cloudflare Workers AI through the `AI` binding, which is
+//    included in the Workers FREE plan (10,000 Neurons/day, reset 00:00 UTC) and needs NO API key
+//    and NO card. When the daily allocation is spent the call fails and the widget says so; on the
+//    free plan it cannot silently start billing, because there is nothing to bill to.
+//    ⚠️ Verify the current allocation at https://developers.cloudflare.com/workers-ai/platform/pricing/
+//       — the figure above came from third-party trackers, not Cloudflare's own page.
+//
+// 🧠 WHY NOT RUN THE MODEL IN THE VISITOR'S BROWSER (WebLLM / WebGPU)? It is genuinely free and it
+//    is a good demo, but it fails the job this widget has. A recruiter gives a portfolio about
+//    ninety seconds; WebLLM must first download 300MB-1GB of weights to THEIR machine, needs
+//    WebGPU (absent on a meaningful share of visitors, worst on mobile), and the ~1B models that
+//    fit are the ones most likely to invent a fact about him. Wrong trade on a page whose whole
+//    purpose is an accurate first impression. Workers AI costs him the same (nothing), downloads
+//    nothing, and answers immediately.
 //
 // What this Worker is responsible for, none of which the browser can be trusted with:
-//    · holding ANTHROPIC_API_KEY
 //    · owning the system prompt, so a visitor cannot edit the persona or the facts
 //    · refusing requests from other origins, so the endpoint is not a free API for the internet
-//    · capping turns, input size and output tokens, so one visitor cannot run up a bill
+//    · capping turns, input size and output tokens
 
 import { PROFILE, SITUATION } from './profile.js';
 
-const MODEL = 'claude-haiku-5-5';   // fast and cheap for Q&A over a fixed fact base.
-                                    // Swap to 'claude-sonnet-5-5' for richer answers at more cost.
-const MAX_TOKENS = 700;
+// Cloudflare's own getting-started example uses this model, so it is available on the binding.
+// Any chat model from https://developers.cloudflare.com/workers-ai/models/ works; they consume
+// Neurons at different rates, so a smaller one stretches the daily allocation further.
+const MODEL = '@cf/google/gemma-4-26b-a4b-it';
+const MAX_TOKENS = 600;
 const MAX_TURNS = 24;               // a recruiter conversation, not a long-running session
 const MAX_CHARS = 1500;             // per message
 
@@ -126,35 +141,37 @@ export default {
       await env.RATE.put(key, String(used + 1), { expirationTtl: 7200 });
     }
 
-    let upstream;
+    // ⛔ ONE SYSTEM TURN, BUILT HERE. The persona and the facts are prepended server-side every
+    //    time rather than trusted from the request, so a visitor cannot send their own system
+    //    message and rewrite who the assistant is or what it may claim.
+    let out;
     try {
-      upstream = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: MAX_TOKENS,
-          system: SYSTEM,
-          messages: clean,
-        }),
+      out = await env.AI.run(MODEL, {
+        messages: [{ role: 'system', content: SYSTEM }, ...clean],
+        max_tokens: MAX_TOKENS,
+        // ⚠️ Low, deliberately. This answers from a fixed fact base; invention is the failure mode
+        //    that matters here, and a smaller model invents more when it is given room to.
+        temperature: 0.3,
       });
-    } catch {
-      return json({ error: 'upstream unreachable' }, 502, origin);
+    } catch (err) {
+      // The daily free allocation running out lands here. Say something a recruiter can act on.
+      console.log('workers-ai error', err && err.message);
+      return json({
+        error: "I'm out of answers for today. Email Yash directly: yashdevdarekar94@gmail.com",
+      }, 503, origin);
     }
 
-    if (!upstream.ok) {
-      // ⛔ Never pass the upstream body through. It can carry account and key detail, and a 401
-      //    rendered in a recruiter's chat window is a worse look than a generic failure.
-      console.log('anthropic error', upstream.status, await upstream.text());
-      return json({ error: "I couldn't reach my brain just then. Try again, or email yash at yashdevdarekar94@gmail.com" }, 502, origin);
-    }
+    // ⚠️ Workers AI models do not all answer in one shape. Newer ones return an OpenAI-style
+    //    `chat.completion` with choices[0].message.content; older ones return { response }.
+    //    Read both rather than assuming, so swapping MODEL cannot silently return nothing.
+    const text = String(
+      out?.choices?.[0]?.message?.content ?? out?.response ?? ''
+    ).trim();
 
-    const data = await upstream.json();
-    const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
-    return json({ reply: text || "I didn't catch that. Could you rephrase?" }, 200, origin);
+    if (!text) {
+      console.log('empty completion', JSON.stringify(out).slice(0, 400));
+      return json({ reply: "I didn't catch that. Could you rephrase?" }, 200, origin);
+    }
+    return json({ reply: text }, 200, origin);
   },
 };
