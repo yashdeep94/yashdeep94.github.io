@@ -169,6 +169,15 @@ export default {
     try {
       out = await env.AI.run(MODEL, {
         messages: [{ role: 'system', content: SYSTEM }, ...clean],
+        // 🐛 WITHOUT THIS THE WIDGET RETURNS NOTHING. gemma-4-26b-a4b is a REASONING model: by
+        //    default it writes its chain of thought into `reasoning_content` and, on the first
+        //    live request, spent all 600 tokens there and came back with content:"" and
+        //    finish_reason:"length". Cloudflare's own example passes this flag; I dropped it when
+        //    adapting the call and the answer silently became an empty string.
+        //    ⛔ Do NOT "fix" this by falling back to reasoning_content. That text is the model
+        //       talking about its own instructions ("Persona: Yash's first-person voice...") and
+        //       printing it would breach Rule 6 and show a recruiter the scaffolding.
+        chat_template_kwargs: { enable_thinking: false },
         max_tokens: MAX_TOKENS,
         // ⚠️ Low, deliberately. This answers from a fixed fact base; invention is the failure mode
         //    that matters here, and a smaller model invents more when it is given room to.
@@ -197,8 +206,16 @@ export default {
     ).trim();
 
     if (!text) {
-      console.log('empty completion', JSON.stringify(out).slice(0, 400));
-      return json({ reply: "I didn't catch that. Could you rephrase?" }, 200, origin);
+      // ⚠️ This used to answer 200 with "I didn't catch that", which blamed the VISITOR for a
+      //    server misconfiguration and made a dead widget look like a conversational hiccup.
+      //    Name the two causes apart in the log, and tell the visitor the truth.
+      const thinking = !!out?.choices?.[0]?.message?.reasoning_content;
+      const reason = out?.choices?.[0]?.finish_reason;
+      console.log('EMPTY COMPLETION', thinking ? 'model returned only reasoning_content' : 'no content',
+                  'finish_reason=' + reason, JSON.stringify(out).slice(0, 300));
+      return json({
+        error: "Something went wrong on my side. Email Yash directly: yashdevdarekar94@gmail.com",
+      }, 502, origin);
     }
     return json({ reply: text }, 200, origin);
   },
