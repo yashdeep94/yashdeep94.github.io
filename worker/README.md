@@ -53,15 +53,15 @@ npx wrangler deploy
 
 That is the whole thing — no `secret put` step, because there is no secret.
 
-`wrangler deploy` prints a URL like `https://yash-portfolio-chat.<subdomain>.workers.dev`. Put it
-in `.env` as `VITE_CHAT_API=...`, and add the same value as a repository **variable** (not a
-secret — it is not one) named `VITE_CHAT_API` under *Settings → Secrets and variables → Actions →
-Variables*. Then add this step to `.github/workflows/deploy.yml` before the build:
+`wrangler deploy` prints a URL like `https://yash-portfolio-chat.<subdomain>.workers.dev`.
 
-```yaml
-      - name: Write .env
-        run: echo "VITE_CHAT_API=${{ vars.VITE_CHAT_API }}" > .env
-```
+That URL is the **built-in default** in `src/components/AskYash.jsx`, so the site needs no build
+configuration and no repository variable. `.env` only overrides it for local work (see
+`.env.example`).
+
+⚠️ It used to be a required `VITE_CHAT_API` build variable, and the GitHub Actions workflow never
+set it, so production shipped with the Cloud option missing entirely and only on-device mode
+offered. Nothing errored. If you move the Worker, change the default in that file.
 
 ## Limits and abuse
 

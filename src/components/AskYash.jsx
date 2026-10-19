@@ -10,10 +10,19 @@ import { LOCAL_SYSTEM, LOCAL_MODEL, LOCAL_MODEL_MB } from '../data/localProfile'
 const LOCAL_MAX_TURNS = 7;   // 7 not 8: at 8 the window had 88 tokens spare, and both the
                              // chars-per-token and tokens-per-turn figures are estimates.
 
-// 🚨 The endpoint is a Cloudflare Worker, not this app. A static build cannot hold an API key:
-//    `vite build` INLINES every VITE_ variable into the bundle, so a key here is public. The URL
-//    is fine to expose; the Worker is what holds the secret and checks the origin. See worker/.
-const API = import.meta.env.VITE_CHAT_API || '';
+// 🚨 The endpoint is a Cloudflare Worker, not this app. A static build cannot hold a credential:
+//    `vite build` INLINES every VITE_ variable into the bundle. The Worker owns the system prompt
+//    and checks the calling origin; this URL is public by design and safe in the bundle.
+//
+// 🐛 THE DEFAULT IS NOT LAZINESS, IT IS THE FIX FOR A REAL OUTAGE. This read
+//    `import.meta.env.VITE_CHAT_API || ''`, and the GitHub Actions workflow never set that
+//    variable, so the production build shipped with API = '' and the Cloud option simply did not
+//    render. The site went live offering ONLY on-device mode, which asks a recruiter for an 880MB
+//    download before their first answer. Nothing errored; the feature just quietly halved itself.
+//    A required build-time variable that only one deploy path sets is a trapdoor. The URL is not
+//    a secret, so the deployed Worker is the default and .env only overrides it for local work.
+const API =
+  import.meta.env.VITE_CHAT_API || 'https://yash-portfolio-chat.yashdevdarekar94.workers.dev';
 
 const ACCENT = '#6366f1';
 
