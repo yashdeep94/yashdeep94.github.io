@@ -4,6 +4,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import AnimatedBackground from './components/AnimatedBackground';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import AskYash from './components/AskYash';
 import Home from './pages/Home';
 import Apps from './pages/Apps';
 
@@ -42,6 +43,7 @@ const AppContent = () => {
           </Routes>
         </main>
         <Footer />
+        <AskYash />
       </div>
     </Router>
   );
