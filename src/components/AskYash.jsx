@@ -3,12 +3,27 @@ import { Sparkles, Send, X, Bot, Cloud, Cpu } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { LOCAL_SYSTEM, LOCAL_MODEL, LOCAL_MODEL_MB } from '../data/localProfile';
 
+// ⚠️ The on-device model has a 4,096-token window and the system prompt takes ~1,300 of it.
+//    Left unbounded, a long conversation silently overflows and the model starts answering from
+//    a window that no longer contains the facts, confidently and wrongly. Keep the last N turns.
+//    Cloud has no such limit; the Worker enforces its own.
+const LOCAL_MAX_TURNS = 8;
+
 // 🚨 The endpoint is a Cloudflare Worker, not this app. A static build cannot hold an API key:
 //    `vite build` INLINES every VITE_ variable into the bundle, so a key here is public. The URL
 //    is fine to expose; the Worker is what holds the secret and checks the origin. See worker/.
 const API = import.meta.env.VITE_CHAT_API || '';
 
 const ACCENT = '#6366f1';
+
+// `dvh` tracks the DYNAMIC viewport: it shrinks when the iOS address bar is showing and when the
+// keyboard opens, which is exactly the case `vh` gets wrong on a phone. Feature-detected because
+// React inline styles cannot carry a CSS fallback value (an array is joined with a comma and
+// emits invalid CSS).
+const DVH =
+  typeof CSS !== 'undefined' && CSS.supports && CSS.supports('height', '100dvh')
+    ? '100dvh'
+    : '100vh';
 
 // WebGPU is the hard requirement for on-device mode and a meaningful share of visitors lack it,
 // mobile worst of all. Detect rather than assume: a toggle that fails on click is worse than a
@@ -75,6 +90,19 @@ const AskYash = () => {
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState(API ? 'cloud' : 'local');   // 'cloud' | 'local'
   const [load, setLoad] = useState(null);             // {pct, text} while weights download
+  // 📱 On a phone the floating panel is the wrong shape: 100vh is unreliable on iOS Safari (the
+  //    address bar collapses after load, so a vh-sized panel is taller than the visible area),
+  //    and the on-screen keyboard covers a bottom-anchored box the moment the input is focused.
+  //    Full screen below 480px solves both, and is what every chat app does on a phone.
+  const [narrow, setNarrow] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 480px)');
+    const on = (e) => setNarrow(e.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
   const engineRef = useRef(null);
   const endRef = useRef(null);
   const inputRef = useRef(null);
@@ -108,7 +136,7 @@ const AskYash = () => {
           }));
         setLoad(null);
         const r = await engine.chat.completions.create({
-          messages: [{ role: 'system', content: LOCAL_SYSTEM }, ...next],
+          messages: [{ role: 'system', content: LOCAL_SYSTEM }, ...next.slice(-LOCAL_MAX_TURNS)],
           temperature: 0.3,
           max_tokens: 400,
         });
@@ -194,13 +222,22 @@ const AskYash = () => {
           role="dialog"
           aria-label="Ask about Yash"
           style={{
-            position: 'fixed', right: 20, bottom: 20, zIndex: 60,
-            width: 'min(400px, calc(100vw - 40px))',
-            height: 'min(560px, calc(100vh - 40px))',
+            position: 'fixed', zIndex: 60,
+            ...(narrow
+              // Full screen on a phone. `100dvh` tracks the DYNAMIC viewport, so it shrinks when
+              // the keyboard opens and when the address bar is showing; `100vh` does neither.
+              ? { inset: 0, width: '100%', height: DVH, borderRadius: 0 }
+              : {
+                  right: 20, bottom: 20,
+                  width: 'min(400px, calc(100vw - 40px))',
+                  height: 'min(560px, calc(100vh - 40px))',
+                  borderRadius: 16,
+                }),
             display: 'flex', flexDirection: 'column',
-            background: panelBg, border: `1px solid ${border}`, borderRadius: 16,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.35)', backdropFilter: 'blur(14px)',
-            overflow: 'hidden',
+            background: panelBg, border: narrow ? 'none' : `1px solid ${border}`,
+            boxShadow: narrow ? 'none' : '0 20px 60px rgba(0,0,0,0.35)',
+            backdropFilter: 'blur(14px)', overflow: 'hidden',
+            paddingBottom: narrow ? 'env(safe-area-inset-bottom)' : 0,
           }}
         >
           <div style={{
@@ -230,8 +267,9 @@ const AskYash = () => {
                 aria-label="Close"
                 style={{
                   marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer',
-                  color: dk ? '#9ca3af' : '#6b7280', padding: 4, display: 'grid',
+                  color: dk ? '#9ca3af' : '#6b7280', display: 'grid',
                   placeItems: 'center', flex: 'none',
+                  width: 44, height: 44, margin: '-10px -10px -10px auto',   // 44px target, same visual size
                 }}
               >
                 <X size={17} />
@@ -263,8 +301,8 @@ const AskYash = () => {
                   title={title}
                   aria-pressed={mode === k}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    padding: '5px 10px', borderRadius: 6, border: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                    padding: '0 12px', minHeight: 36, borderRadius: 6, border: 'none',
                     fontSize: '0.71rem', fontFamily: 'inherit', fontWeight: 600,
                     cursor: k === 'local' && !hasWebGPU ? 'not-allowed' : 'pointer',
                     background: mode === k ? ACCENT : 'transparent',
@@ -305,7 +343,8 @@ const AskYash = () => {
                       key={q}
                       onClick={() => send(q)}
                       style={{
-                        padding: '7px 12px', borderRadius: 999, cursor: 'pointer',
+                        padding: '0 14px', minHeight: 38, borderRadius: 999, cursor: 'pointer',
+                        display: 'inline-flex', alignItems: 'center',
                         border: `1px solid ${border}`, background: 'transparent',
                         color: dk ? '#c7d2fe' : '#4338ca',
                         fontSize: '0.78rem', fontFamily: 'inherit',

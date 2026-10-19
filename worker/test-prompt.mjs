@@ -54,9 +54,18 @@ for (const [name, hay] of [['cloud profile', CLOUD], ['on-device profile', LOCAL
   if (n) { console.error(`EM DASH x${n} in ${name}`); bad++; }
 }
 
-// On-device runs a 4,096-token context. Leave room for the conversation.
+// On-device runs a 4,096-token context, and what the system prompt spends is taken from the
+// conversation. The budget below is derived, not guessed:
+//   4096 window - 1300 system - 400 reserved for the answer = 2396 for history
+//   a turn is ~30 (question) + ~250 (answer) = ~280 tokens  ->  about 8 turns
+// AskYash.jsx caps local history to LOCAL_MAX_TURNS so overflow cannot happen even if a visitor
+// keeps going. Raising this number without re-deriving it is how the window silently overflows.
+const LOCAL_BUDGET = 1300;
 const localTok = LOCAL_SYSTEM.length / 4;
-if (localTok > 1100) { console.error(`on-device prompt ~${Math.round(localTok)} tokens, over the 1100 budget`); bad++; }
+if (localTok > LOCAL_BUDGET) {
+  console.error(`on-device prompt ~${Math.round(localTok)} tokens, over the ${LOCAL_BUDGET} budget`);
+  bad++;
+}
 
 if (bad) { console.error(`\n${bad} problem(s). Do not deploy.`); process.exit(1); }
 console.log(`OK. cloud ~${Math.round(CLOUD.length / 4)} tokens, on-device ~${Math.round(localTok)} tokens.`);
