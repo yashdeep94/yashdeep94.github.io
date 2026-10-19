@@ -33,11 +33,14 @@ const getEngine = async (onProgress) => {
   }
 };
 
+// ⚠️ An opener must buy more than the resume already gives. "When can he start?" resolved to one
+//    sentence a recruiter could read on the page, so it was spending a quarter of the first
+//    impression on nothing.
 const OPENERS = [
   'What has he actually built?',
-  'Is he a fit for an AI/ML role?',
   'Tell me about LISA',
-  'When can he start?',
+  'Why him over other new grads?',
+  'Is he a fit for a backend role?',
 ];
 
 const Bubble = ({ role, text, dk }) => {
