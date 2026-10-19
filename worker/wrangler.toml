@@ -7,9 +7,10 @@ compatibility_date = "2026-10-01"
 [ai]
 binding = "AI"
 
-# Optional per-IP hourly cap. The Worker uses it when present and skips it when absent,
-# so deploying without it works. Create the namespace, then uncomment both lines:
-#   npx wrangler kv namespace create RATE
-# [[kv_namespaces]]
-# binding = "RATE"
-# id = "paste-the-id-wrangler-prints"
+# Per-IP hourly cap, enabled 2026-10-19 before the widget went public. The endpoint is on the
+# open internet and every call spends from the shared daily Neuron allocation, so without this
+# one person with curl can burn the day and leave real visitors with "email him instead".
+# The Worker uses this binding when present and skips it when absent, so it is safe to remove.
+[[kv_namespaces]]
+binding = "RATE"
+id = "24312ac946d84488b2b71054dae04783"

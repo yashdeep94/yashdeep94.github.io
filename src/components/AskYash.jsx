@@ -7,7 +7,8 @@ import { LOCAL_SYSTEM, LOCAL_MODEL, LOCAL_MODEL_MB } from '../data/localProfile'
 //    Left unbounded, a long conversation silently overflows and the model starts answering from
 //    a window that no longer contains the facts, confidently and wrongly. Keep the last N turns.
 //    Cloud has no such limit; the Worker enforces its own.
-const LOCAL_MAX_TURNS = 8;
+const LOCAL_MAX_TURNS = 7;   // 7 not 8: at 8 the window had 88 tokens spare, and both the
+                             // chars-per-token and tokens-per-turn figures are estimates.
 
 // 🚨 The endpoint is a Cloudflare Worker, not this app. A static build cannot hold an API key:
 //    `vite build` INLINES every VITE_ variable into the bundle, so a key here is public. The URL

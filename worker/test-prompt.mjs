@@ -12,14 +12,23 @@
 
 import { PROFILE, SITUATION } from './src/profile.js';
 import { LOCAL_SYSTEM } from '../src/data/localProfile.js';
+import { readFileSync } from 'node:fs';
 
 const CLOUD = PROFILE + '\n' + SITUATION;
 
 // Each entry: [haystack name, text, phrases that MUST be present]
 const MUST = [
   ['cloud profile', CLOUD, [
-    'sole developer', 'MCP', 'Cursor', 'GitHub Actions', 'Docker',
-    'yashdevdarekar94@gmail.com', 'two tiers',
+    'sole developer', 'MCP', 'Cursor', 'GitHub Actions',
+    'yashdevdarekar94@gmail.com',
+    // Docker is REAL (Eisai Posit + the homeserver Compose stack) and its absence from this file
+    // is what made the assistant invent "Docker from my coursework" under pressure and then
+    // defend it for three turns. Assert the term AND its scope.
+    'Docker', 'Posit',
+    // An explicit NOT-IN-BACKGROUND list. Absence alone does not stop a model bridging; it has to
+    // be told the answer is no.
+    'NOT IN MY BACKGROUND', 'Airflow', 'Snowflake',
+    'COURSEWORK OR SMALL PROJECTS',
   ]],
   ['on-device profile', LOCAL_SYSTEM, [
     'sole developer', 'MCP', 'yashdevdarekar94@gmail.com',
@@ -47,6 +56,27 @@ for (const [name, hay, phrases] of MUST_NOT) {
   }
 }
 
+// ⛔ NO THIRD-PERSON PRONOUNS. The assistant speaks AS him, and it recites instruction text as
+//    readily as fact text: 15 of 45 live answers mixed "I" and "he", including "...how I managed
+//    the integrity of the LISA retrieval layer, you can reach him at ...". Every pronoun the
+//    model can read must already be first person. Two question strings are quoted deliberately
+//    (they are what a VISITOR types) and are allowed.
+// Lines that legitimately name Yash in the third person: they define who the ASSISTANT is in
+// relation to him, and are never restated as a fact about himself. Everything else must be "I".
+const ALLOWED_3P = [
+  'where is he weakest', 'how good is he at', 'what is he still learning',
+  "yash darekar's portfolio", 'assistant yash built', 'in his first-person voice',
+  'even when the visitor says',   // the rule that FORBIDS third person must quote it to forbid it
+];
+for (const [name, hay] of [['cloud profile', CLOUD], ['on-device profile', LOCAL_SYSTEM]]) {
+  const lines = hay.split('\n').filter((l) => {
+    const low = l.toLowerCase();
+    if (ALLOWED_3P.some((a) => low.includes(a))) return false;
+    return /\b(he|him|his)\b/i.test(l);
+  });
+  for (const l of lines) { console.error(`THIRD PERSON in ${name}: "${l.trim().slice(0, 90)}"`); bad++; }
+}
+
 // ⛔ No em dashes anywhere a model can copy them from. Models mirror source punctuation, and the
 //    style rule alone does not survive contact with an em dash in the facts.
 for (const [name, hay] of [['cloud profile', CLOUD], ['on-device profile', LOCAL_SYSTEM]]) {
@@ -54,18 +84,32 @@ for (const [name, hay] of [['cloud profile', CLOUD], ['on-device profile', LOCAL
   if (n) { console.error(`EM DASH x${n} in ${name}`); bad++; }
 }
 
-// On-device runs a 4,096-token context, and what the system prompt spends is taken from the
-// conversation. The budget below is derived, not guessed:
-//   4096 window - 1300 system - 400 reserved for the answer = 2396 for history
-//   a turn is ~30 (question) + ~250 (answer) = ~280 tokens  ->  about 8 turns
-// AskYash.jsx caps local history to LOCAL_MAX_TURNS so overflow cannot happen even if a visitor
-// keeps going. Raising this number without re-deriving it is how the window silently overflows.
-const LOCAL_BUDGET = 1300;
-const localTok = LOCAL_SYSTEM.length / 4;
-if (localTok > LOCAL_BUDGET) {
-  console.error(`on-device prompt ~${Math.round(localTok)} tokens, over the ${LOCAL_BUDGET} budget`);
+// ── On-device window arithmetic. ⛔ Do not replace this with a magic number for the prompt size:
+//    the thing that actually matters is whether the SYSTEM PROMPT plus the MAXIMUM HISTORY the
+//    widget will send still fits, and those are two constants in two different files. Assert the
+//    relationship, so changing either one is caught by the other.
+//      window      4096  (Llama-3.2-1B-Instruct-q4f16)
+//      a turn      ~280  (~30 question + ~250 answer)
+//      reserved     400  (max_tokens for the answer in flight)
+const LOCAL_WINDOW = 4096;
+const TURN_TOKENS = 280;
+const RESERVED_OUT = 400;
+
+const widget = readFileSync(new URL('../src/components/AskYash.jsx', import.meta.url), 'utf8');
+const mt = widget.match(/LOCAL_MAX_TURNS\s*=\s*(\d+)/);
+if (!mt) { console.error('cannot find LOCAL_MAX_TURNS in AskYash.jsx'); bad++; }
+const maxTurns = mt ? Number(mt[1]) : 0;
+
+const localTok = Math.round(LOCAL_SYSTEM.length / 4);
+const needed = localTok + maxTurns * TURN_TOKENS + RESERVED_OUT;
+if (needed > LOCAL_WINDOW) {
+  console.error(
+    `on-device overflows its window: system ${localTok} + ${maxTurns} turns x ${TURN_TOKENS} ` +
+    `+ ${RESERVED_OUT} reserved = ${needed}, over ${LOCAL_WINDOW}. ` +
+    `Shorten LOCAL_SYSTEM or lower LOCAL_MAX_TURNS in AskYash.jsx.`);
   bad++;
 }
 
 if (bad) { console.error(`\n${bad} problem(s). Do not deploy.`); process.exit(1); }
-console.log(`OK. cloud ~${Math.round(CLOUD.length / 4)} tokens, on-device ~${Math.round(localTok)} tokens.`);
+console.log(`OK. cloud ~${Math.round(CLOUD.length / 4)} tok. on-device ~${localTok} tok + ` +
+  `${maxTurns} turns = ${needed} of ${LOCAL_WINDOW}.`);
