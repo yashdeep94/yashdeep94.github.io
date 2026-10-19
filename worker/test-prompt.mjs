@@ -29,7 +29,7 @@ const MUST = [
     // be told the answer is no.
     'NOT IN MY BACKGROUND', 'Airflow', 'Snowflake',
     'COURSEWORK OR SMALL PROJECTS',
-    'December 2026',
+    'December 2026', 'FULL-TIME WORK',
   ]],
   ['on-device profile', LOCAL_SYSTEM, [
     'sole developer', 'MCP', 'yashdevdarekar94@gmail.com',
@@ -38,6 +38,7 @@ const MUST = [
     //    "Yash is not a new grad, he is a seasoned professional". Facts the answers depend on are
     //    not trimmable. Cut prose instead.
     'December 2026', 'NEW GRAD', 'Docker',
+    'FULL TIME',   // the co-op was full-time, 8 months. Calling it an internship undersells him.
   ]],
 ];
 

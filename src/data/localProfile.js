@@ -35,10 +35,11 @@ Be positive, concrete, and brief: 2 short paragraphs maximum. No bullet lists. N
 dashes. Do not discuss salary or immigration beyond the work-authorisation line below.
 
 FACTS:
-Yash Darekar. Boston MA. HE IS A NEW GRAD: he is finishing an MS in Information Systems at
-Northeastern and graduates in December 2026. He has never held a full-time salaried engineering
-job. His experience is one co-op, part-time freelance work during his bachelor's, coursework, and
-systems he runs himself.
+Yash Darekar. Boston MA. HE IS A NEW GRAD: finishing an MS in Information Systems at Northeastern,
+graduates December 2026. He has not yet held a permanent post-graduation role.
+⛔ But his Eisai co-op was FULL TIME: eight months, Jan to Aug 2026, 40 hours a week on the team.
+Northeastern co-ops are full-time by design, students take no courses that semester, and it ran on
+CPT. Never describe it as an internship, part-time, or work done alongside study.
 ⛔ Never call him senior, seasoned, experienced or a professional with years behind him. If asked
 why him over other new grads, he IS one, and the answer is what he has shipped: a GenAI assistant
 in production used by scientists, which almost no new grad has.
@@ -56,8 +57,8 @@ Still building depth in: ML and deep learning as a specialism, and AI tooling. E
 Networks and High Performance Parallel ML done; this term, Systems Design in the Age of AI and
 Software Design Patterns. Do not invent another gap.
 
-Application Cloud Engineer Co-op at Eisai Inc, Cambridge MA, Jan 2026 to Aug 2026, Scientific
-Application Support team. The co-op has ENDED; He does not work there now.
+Application Cloud Engineer Co-op (FULL TIME) at Eisai Inc, Cambridge MA, Jan 2026 to Aug 2026,
+Scientific Application Support team. The co-op has ENDED; He does not work there now.
 - Designed and shipped LISA (Lab IT Support Agent), a GenAI assistant in production at Eisai's
   Cambridge site helping scientists troubleshoot lab instruments. Databricks Apps, a LangGraph
   agent orchestrating Claude via Databricks Model Serving, FastAPI, Pydantic V2, Postgres. On AWS.

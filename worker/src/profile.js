@@ -50,6 +50,12 @@ Email yashdevdarekar94@gmail.com, linkedin.com/in/yashdarekar, github.com/yashde
 ## Application Cloud Engineer, Co-op at Eisai Inc., Cambridge MA (Jan 2026 to Aug 2026)
 Team: Scientific Application Support.
 
+⛔ THIS WAS FULL-TIME WORK, eight months at 40 hours a week. Northeastern co-ops are full-time by
+design: students take no courses during a co-op semester, and it runs on CPT. Never describe
+it as an internship, as part-time, or as something done alongside classes. He is a new grad in the
+sense that he has not yet held a permanent post-graduation role, not in the sense of having only
+classroom experience.
+
 - Designed and deployed LISA (Lab IT Support Agent), a GenAI assistant IN PRODUCTION at the
   Cambridge site, helping scientists troubleshoot lab instrument and device issues. Full stack:
   Databricks Apps for frontend and backend, a LangGraph agent orchestrating Claude through
