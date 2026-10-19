@@ -18,19 +18,30 @@ variable into the bundle**, so the frontend cannot hold a credential, and a brow
 trusted to own the system prompt either — a visitor could edit the persona or the fact base. The
 Worker owns both, and checks the calling origin before it does any work.
 
-## Why not run the model in the visitor's browser
+## The two modes
 
-WebLLM/WebGPU is genuinely free and a nice demo, but it is the wrong trade for this page:
+The widget has a **Cloud / On device** toggle.
 
-- it downloads **300MB–1GB of weights to the visitor's machine** before the first answer, and a
-  recruiter gives a portfolio about ninety seconds
-- it needs **WebGPU**, which a meaningful share of visitors do not have, worst on mobile
-- the **~1B models** that fit in a browser are the ones most likely to invent a fact about him,
-  on a page whose entire job is an accurate first impression
+**Cloud** (default) runs here, on Workers AI. Fast, no download, the stronger model.
 
-Workers AI costs the same (nothing), downloads nothing, and answers immediately. If the
-"runs entirely on your device" angle is worth showing off later, the honest way to do it is an
-opt-in toggle behind a click, not the default path.
+**On device** runs `Llama-3.2-1B-Instruct-q4f16_1` in the visitor's own browser through
+[WebLLM](https://github.com/mlc-ai/web-llm) over WebGPU. Nothing is sent anywhere — the
+conversation never leaves their machine. The cost is theirs, not his:
+
+- a **one-time ~880MB** weight download before the first answer, cached by their browser
+- **WebGPU required**; the toggle is disabled with an explanatory tooltip when absent
+- a **1B model**, so answers are shorter and less precise than Cloud
+
+That is why Cloud is the default and On device is opt-in: a recruiter gives a portfolio about
+ninety seconds, and a progress bar spends all of it. On device is there because "this model is
+running entirely in your browser" is itself worth showing an AI-focused hiring manager, and
+because it is a genuine privacy answer for anyone who would rather not have their questions
+leave their machine.
+
+The two do **not** share a fact base. `worker/src/profile.js` is the full one; on-device uses the
+condensed `src/data/localProfile.js`, because 1B models have a 4,096-token context window and the
+full profile would crowd out the conversation. Switching modes clears the transcript for that
+reason, rather than carrying one model's history into a window that cannot hold it.
 
 ## Deploy
 
