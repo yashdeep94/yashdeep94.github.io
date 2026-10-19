@@ -495,7 +495,7 @@ const AskYash = () => {
                   color: dk ? '#9ca3af' : '#6b7280',
                 }}>
                   {mode === 'local'
-                    ? `On-device mode: the model runs entirely in your browser and nothing you type leaves it. ${cached ? 'It is already downloaded, so answers start immediately.' : `Your first question downloads about ${LOCAL_MODEL_MB}MB.`} It is a small model, so answers are shorter than Cloud.`
+                    ? `On-device mode: a 1B model runs entirely in your browser and nothing you type leaves it. ${cached ? 'It is already downloaded, so answers start immediately.' : `Your first question downloads about ${LOCAL_MODEL_MB}MB.`} It is small and fast, and it does get things wrong. For anything you plan to act on, use Cloud.`
                     : 'Running on Cloudflare Workers AI. Switch to On device above to run the model in your own browser instead.'}
                 </p>
                 {/* ⛔ If this page put ~880MB on someone's disk, it owes them a way to see that and

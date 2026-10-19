@@ -29,9 +29,15 @@ const MUST = [
     // be told the answer is no.
     'NOT IN MY BACKGROUND', 'Airflow', 'Snowflake',
     'COURSEWORK OR SMALL PROJECTS',
+    'December 2026',
   ]],
   ['on-device profile', LOCAL_SYSTEM, [
     'sole developer', 'MCP', 'yashdevdarekar94@gmail.com',
+    // ⛔ Both of these were trimmed out at different times while fitting the 4,096-token window,
+    //    and each time the model invented to fill the hole: Docker "from coursework", and
+    //    "Yash is not a new grad, he is a seasoned professional". Facts the answers depend on are
+    //    not trimmable. Cut prose instead.
+    'December 2026', 'NEW GRAD', 'Docker',
   ]],
 ];
 
@@ -40,7 +46,7 @@ const MUST_NOT = [
   // ⚠️ Do NOT test for the word "uptime" here. The BAN LINE contains it legitimately, so a
   //    naive absence check fails on a correctly configured file. Test the ban's presence
   //    (MUST, above) instead; that is the thing that actually protects him.
-  ['cloud profile', CLOUD, ['STEM OPT', 'F-1', 'H-1B', 'sole developer of']],
+  ['cloud profile', CLOUD, ['STEM OPT', 'F-1', 'H-1B', 'sole developer of', 'seasoned']],
   ['on-device profile', LOCAL_SYSTEM, ['STEM OPT', 'F-1', 'H-1B']],
 ];
 
