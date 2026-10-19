@@ -11,8 +11,6 @@
 // model. Run it before every deploy:  node worker/test-prompt.mjs
 
 import { PROFILE, SITUATION } from './src/profile.js';
-import { LOCAL_SYSTEM } from '../src/data/localProfile.js';
-import { readFileSync } from 'node:fs';
 
 const CLOUD = PROFILE + '\n' + SITUATION;
 
@@ -31,15 +29,6 @@ const MUST = [
     'COURSEWORK OR SMALL PROJECTS',
     'December 2026', 'FULL-TIME, PAID, SALARIED',
   ]],
-  ['on-device profile', LOCAL_SYSTEM, [
-    'sole developer', 'MCP', 'yashdevdarekar94@gmail.com',
-    // ⛔ Both of these were trimmed out at different times while fitting the 4,096-token window,
-    //    and each time the model invented to fill the hole: Docker "from coursework", and
-    //    "Yash is not a new grad, he is a seasoned professional". Facts the answers depend on are
-    //    not trimmable. Cut prose instead.
-    'December 2026', 'NEW GRAD', 'Docker',
-    'FULL TIME', 'SALARIED',   // full-time, paid, 8 months. 'Co-op' alone reads as unpaid.
-  ]],
 ];
 
 // Text that must NOT appear: a visa category he does not hold, and banned figures.
@@ -48,7 +37,6 @@ const MUST_NOT = [
   //    naive absence check fails on a correctly configured file. Test the ban's presence
   //    (MUST, above) instead; that is the thing that actually protects him.
   ['cloud profile', CLOUD, ['STEM OPT', 'F-1', 'H-1B', 'sole developer of', 'seasoned']],
-  ['on-device profile', LOCAL_SYSTEM, ['STEM OPT', 'F-1', 'H-1B']],
 ];
 
 let bad = 0;
@@ -75,7 +63,7 @@ const ALLOWED_1P = [
   'never "i" or "my"',          // the rule that forbids first person must quote it
   'never "i", "my" or "me"',
 ];
-for (const [name, hay] of [['cloud profile', CLOUD], ['on-device profile', LOCAL_SYSTEM]]) {
+for (const [name, hay] of [['cloud profile', CLOUD]]) {
   const lines = hay.split('\n').filter((l) => {
     const low = l.toLowerCase();
     if (ALLOWED_1P.some((a) => low.includes(a))) return false;
@@ -86,37 +74,10 @@ for (const [name, hay] of [['cloud profile', CLOUD], ['on-device profile', LOCAL
 
 // ⛔ No em dashes anywhere a model can copy them from. Models mirror source punctuation, and the
 //    style rule alone does not survive contact with an em dash in the facts.
-for (const [name, hay] of [['cloud profile', CLOUD], ['on-device profile', LOCAL_SYSTEM]]) {
+for (const [name, hay] of [['cloud profile', CLOUD]]) {
   const n = (hay.match(/—/g) || []).length;
   if (n) { console.error(`EM DASH x${n} in ${name}`); bad++; }
 }
 
-// ── On-device window arithmetic. ⛔ Do not replace this with a magic number for the prompt size:
-//    the thing that actually matters is whether the SYSTEM PROMPT plus the MAXIMUM HISTORY the
-//    widget will send still fits, and those are two constants in two different files. Assert the
-//    relationship, so changing either one is caught by the other.
-//      window      4096  (Llama-3.2-1B-Instruct-q4f16)
-//      a turn      ~280  (~30 question + ~250 answer)
-//      reserved     400  (max_tokens for the answer in flight)
-const LOCAL_WINDOW = 4096;
-const TURN_TOKENS = 280;
-const RESERVED_OUT = 400;
-
-const widget = readFileSync(new URL('../src/components/AskYash.jsx', import.meta.url), 'utf8');
-const mt = widget.match(/LOCAL_MAX_TURNS\s*=\s*(\d+)/);
-if (!mt) { console.error('cannot find LOCAL_MAX_TURNS in AskYash.jsx'); bad++; }
-const maxTurns = mt ? Number(mt[1]) : 0;
-
-const localTok = Math.round(LOCAL_SYSTEM.length / 4);
-const needed = localTok + maxTurns * TURN_TOKENS + RESERVED_OUT;
-if (needed > LOCAL_WINDOW) {
-  console.error(
-    `on-device overflows its window: system ${localTok} + ${maxTurns} turns x ${TURN_TOKENS} ` +
-    `+ ${RESERVED_OUT} reserved = ${needed}, over ${LOCAL_WINDOW}. ` +
-    `Shorten LOCAL_SYSTEM or lower LOCAL_MAX_TURNS in AskYash.jsx.`);
-  bad++;
-}
-
 if (bad) { console.error(`\n${bad} problem(s). Do not deploy.`); process.exit(1); }
-console.log(`OK. cloud ~${Math.round(CLOUD.length / 4)} tok. on-device ~${localTok} tok + ` +
-  `${maxTurns} turns = ${needed} of ${LOCAL_WINDOW}.`);
+console.log(`OK. cloud fact base ~${Math.round(CLOUD.length / 4)} tokens.`);

@@ -1,13 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, X, Bot, Cloud, Cpu } from 'lucide-react';
+import { Sparkles, Send, X, Bot } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-import { LOCAL_SYSTEM, LOCAL_MODEL, LOCAL_MODEL_MB } from '../data/localProfile';
 
-// ⚠️ The on-device model has a 4,096-token window and the system prompt takes ~1,300 of it.
-//    Left unbounded, a long conversation silently overflows and the model starts answering from
-//    a window that no longer contains the facts, confidently and wrongly. Keep the last N turns.
-//    Cloud has no such limit; the Worker enforces its own.
-const LOCAL_MAX_TURNS = 7;   // 7 not 8: at 8 the window had 88 tokens spare, and both the
                              // chars-per-token and tokens-per-turn figures are estimates.
 
 // 🚨 The endpoint is a Cloudflare Worker, not this app. A static build cannot hold a credential:
@@ -38,48 +32,9 @@ const DVH =
 // WebGPU is the hard requirement for on-device mode and a meaningful share of visitors lack it,
 // mobile worst of all. Detect rather than assume: a toggle that fails on click is worse than a
 // toggle that is honestly disabled.
-const hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
-
 // 🚨 The engine is ~14MB of JS plus ~880MB of weights. It is dynamically imported on FIRST USE of
 //    on-device mode, never at page load, so a recruiter who never touches the toggle pays nothing
 //    for its existence. Vite code-splits it into its own chunk automatically.
-// WebLLM stores weights in the browser's Cache Storage under these three names. Checking and
-// clearing them uses the NATIVE caches API, so the widget can report and delete an 880MB download
-// WITHOUT importing the 6MB engine just to ask a question about it.
-// ⚠️ `caches` is secure-context only (https or localhost) and throws in some private modes, so
-//    every call is guarded and the UI simply hides when it is unavailable.
-const WEBLLM_CACHES = ['webllm/model', 'webllm/wasm', 'webllm/config'];
-
-const modelCached = async () => {
-  try {
-    if (typeof caches === 'undefined') return false;
-    const keys = await caches.keys();
-    return keys.includes('webllm/model');
-  } catch { return false; }
-};
-
-const clearModelCache = async () => {
-  try {
-    await Promise.all(WEBLLM_CACHES.map((k) => caches.delete(k)));
-    return true;
-  } catch { return false; }
-};
-
-let enginePromise = null;
-const getEngine = async (onProgress) => {
-  if (enginePromise) return enginePromise;
-  enginePromise = (async () => {
-    const webllm = await import('@mlc-ai/web-llm');
-    return webllm.CreateMLCEngine(LOCAL_MODEL, { initProgressCallback: onProgress });
-  })();
-  try {
-    return await enginePromise;
-  } catch (err) {
-    enginePromise = null;        // a failed load must not poison the next attempt
-    throw err;
-  }
-};
-
 // ⚠️ An opener must buy more than the resume already gives. "When can he start?" resolved to one
 //    sentence a recruiter could read on the page, so it was spending a quarter of the first
 //    impression on nothing.
@@ -191,8 +146,6 @@ const AskYash = () => {
   const [msgs, setMsgs] = useState([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
-  const [mode, setMode] = useState(API ? 'cloud' : 'local');   // 'cloud' | 'local'
-  const [load, setLoad] = useState(null);             // {pct, text} while weights download
   // 📱 On a phone the floating panel is the wrong shape: 100vh is unreliable on iOS Safari (the
   //    address bar collapses after load, so a vh-sized panel is taller than the visible area),
   //    and the on-screen keyboard covers a bottom-anchored box the moment the input is focused.
@@ -206,8 +159,6 @@ const AskYash = () => {
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
   }, []);
-  const engineRef = useRef(null);
-  const [cached, setCached] = useState(false);
   const endRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -233,7 +184,6 @@ const AskYash = () => {
 
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
   // Re-check on open and after a load, so the footer reflects reality rather than this session.
-  useEffect(() => { if (open) modelCached().then(setCached); }, [open, load]);
   useEffect(() => {
     const esc = (e) => e.key === 'Escape' && setOpen(false);
     window.addEventListener('keydown', esc);
@@ -251,8 +201,8 @@ const AskYash = () => {
     const fail = (why) => setMsgs([...next, { role: 'assistant', content: why }]);
 
     try {
-      // Both modes append into the SAME assistant bubble as tokens arrive, so the two paths feel
-      // identical to a visitor and the scroll does not jump when a finished answer lands whole.
+      // Tokens append into the SAME assistant bubble as they arrive, so the panel never jumps
+      // from empty to a finished block of text.
       const push = (delta) =>
         setMsgs((cur) => {
           const copy = cur.slice();
@@ -268,79 +218,40 @@ const AskYash = () => {
         setMsgs((cur) => cur.map((m, i) =>
           i === cur.length - 1 && m.streaming ? { ...m, streaming: false } : m));
 
-      if (mode === 'local') {
-        // ── ON DEVICE. Nothing leaves the browser; no request is made at all.
-        const engine =
-          engineRef.current ||
-          (engineRef.current = await getEngine((p) => {
-            const pct = Math.round((p.progress || 0) * 100);
-            setLoad({ pct, text: p.text || 'Loading model' });
-          }));
-        setLoad(null);
-        const stream = await engine.chat.completions.create({
-          messages: [{ role: 'system', content: LOCAL_SYSTEM }, ...next.slice(-LOCAL_MAX_TURNS)],
-          temperature: 0.3,
-          max_tokens: 400,
-          stream: true,
-        });
-        for await (const part of stream) {
-          const delta = part?.choices?.[0]?.delta?.content;
-          if (delta) push(delta);
+      const r = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: next }),
+      });
+      // An error comes back as JSON, a good answer as a text stream. Branch on the type rather
+      // than assuming, so a 429 or a 502 still renders its message instead of raw JSON.
+      const ctype = r.headers.get('Content-Type') || '';
+      if (!r.ok || ctype.includes('application/json')) {
+        const data = await r.json().catch(() => ({}));
+        setMsgs([...next, {
+          role: 'assistant',
+          content: data.reply || data.error || 'Something went wrong. Email Yash at yashdevdarekar94@gmail.com',
+        }]);
+      } else {
+        const reader = r.body.getReader();
+        const dec = new TextDecoder();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          push(dec.decode(value, { stream: true }));
         }
         settle();
-      } else {
-        // ── CLOUD. The Worker owns the prompt and the facts, and streams plain text back.
-        const r = await fetch(API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: next }),
-        });
-        // An error comes back as JSON, a good answer as a text stream. Branch on the type rather
-        // than assuming, so a 429 or a 502 still renders its message instead of raw JSON.
-        const ctype = r.headers.get('Content-Type') || '';
-        if (!r.ok || ctype.includes('application/json')) {
-          const data = await r.json().catch(() => ({}));
-          setMsgs([...next, {
-            role: 'assistant',
-            content: data.reply || data.error || 'Something went wrong. Email Yash at yashdevdarekar94@gmail.com',
-          }]);
-        } else {
-          const reader = r.body.getReader();
-          const dec = new TextDecoder();
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            push(dec.decode(value, { stream: true }));
-          }
-          settle();
-        }
       }
     } catch (err) {
       // ⛔ Say what to do next. A dead chat widget on a portfolio is worse than no widget, so the
       //    failure path always hands the recruiter a working way to reach him.
-      setLoad(null);
       console.error(err);
-      fail(
-        mode === 'local'
-          ? "The on-device model couldn't start on this machine. Switch back to Cloud above, or email Yash at yashdevdarekar94@gmail.com"
-          : "I couldn't reach the server. Reach Yash directly at yashdevdarekar94@gmail.com"
-      );
+      fail("I couldn't reach the server just then. Reach Yash directly at yashdevdarekar94@gmail.com");
     } finally {
       setBusy(false);
     }
   };
 
-  const switchMode = (m) => {
-    if (m === mode || busy) return;
-    setMode(m);
-    // ⚠️ The two modes do NOT share a fact base: on-device runs a condensed profile to fit a
-    //    4,096-token window. Carrying a cloud transcript into it would push those facts out of
-    //    context, so the conversation restarts and says so rather than degrading silently.
-    if (msgs.length) {
-      setMsgs([]);
-      setLoad(null);
-    }
-  };
 
   const panelBg = dk ? 'rgba(10,15,26,0.97)' : 'rgba(255,255,255,0.98)';
   const border = dk ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.2)';
@@ -352,9 +263,7 @@ const AskYash = () => {
   //    218kB bundle with no chat in it at all. A build that succeeds while removing the thing
   //    you are shipping is the worst kind of green.
   //
-  //    It was also wrong on its own terms: ON-DEVICE MODE NEEDS NO WORKER. With no API
-  //    configured the local path still works perfectly, so the widget stays and runs local-only.
-  if (!API && !hasWebGPU) return null;
+  if (!API) return null;
 
   return (
     <>
@@ -433,46 +342,6 @@ const AskYash = () => {
                 <X size={17} />
               </button>
             </div>
-
-            <div
-              role="group"
-              aria-label="Where the model runs"
-              style={{
-                display: 'flex', gap: 2, padding: 2, marginTop: 9, borderRadius: 8,
-                width: 'fit-content',
-                background: dk ? 'rgba(255,255,255,0.05)' : 'rgba(15,23,42,0.05)',
-              }}
-            >
-              {[
-                ...(API ? [{ k: 'cloud', Icon: Cloud, label: 'Cloud', title: 'Runs on Cloudflare Workers AI' }] : []),
-                {
-                  k: 'local', Icon: Cpu, label: 'On device',
-                  title: hasWebGPU
-                    ? `Runs entirely in your browser. Downloads ~${LOCAL_MODEL_MB}MB the first time.`
-                    : 'Needs WebGPU, which this browser does not have',
-                },
-              ].map(({ k, Icon, label, title }) => (
-                <button
-                  key={k}
-                  onClick={() => switchMode(k)}
-                  disabled={k === 'local' && !hasWebGPU}
-                  title={title}
-                  aria-pressed={mode === k}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    padding: '0 12px', minHeight: 36, borderRadius: 6, border: 'none',
-                    fontSize: '0.71rem', fontFamily: 'inherit', fontWeight: 600,
-                    cursor: k === 'local' && !hasWebGPU ? 'not-allowed' : 'pointer',
-                    background: mode === k ? ACCENT : 'transparent',
-                    color: mode === k ? '#fff'
-                      : k === 'local' && !hasWebGPU ? (dk ? '#4b5563' : '#cbd5e1')
-                      : dk ? '#9ca3af' : '#6b7280',
-                  }}
-                >
-                  <Icon size={12} /> {label}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div
@@ -488,39 +357,6 @@ const AskYash = () => {
                   Hi, I&apos;m an AI assistant Yash built for this site. Ask me what he&apos;s
                   shipped, how he works, or whether he fits a role you&apos;re hiring for.
                 </p>
-                {/* ⛔ The cost of on-device mode is the visitor's bandwidth, so it is stated
-                    BEFORE they commit to it, not discovered during a progress bar. */}
-                <p style={{
-                  fontSize: '0.76rem', lineHeight: 1.55, margin: '0 0 14px',
-                  color: dk ? '#9ca3af' : '#6b7280',
-                }}>
-                  {mode === 'local'
-                    ? `On-device mode: a 1B model runs entirely in your browser and nothing you type leaves it. ${cached ? 'It is already downloaded, so answers start immediately.' : `Your first question downloads about ${LOCAL_MODEL_MB}MB.`} It is small and fast, and it does get things wrong. For anything you plan to act on, use Cloud.`
-                    : 'Running on Cloudflare Workers AI. Switch to On device above to run the model in your own browser instead.'}
-                </p>
-                {/* ⛔ If this page put ~880MB on someone's disk, it owes them a way to see that and
-                    take it back, without hunting through DevTools. Shown whenever the cache
-                    exists, in either mode, because the bytes are there either way. */}
-                {cached && (
-                  <p style={{ fontSize: '0.74rem', margin: '0 0 14px', color: dk ? '#9ca3af' : '#6b7280' }}>
-                    ~{LOCAL_MODEL_MB}MB of model weights are stored in this browser.{' '}
-                    <button
-                      onClick={async () => {
-                        if (await clearModelCache()) {
-                          engineRef.current = null;
-                          enginePromise = null;
-                          setCached(false);
-                        }
-                      }}
-                      style={{
-                        background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                        font: 'inherit', color: ACCENT, textDecoration: 'underline',
-                      }}
-                    >
-                      Remove them
-                    </button>
-                  </p>
-                )}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                   {OPENERS.map((q) => (
                     <button
@@ -551,29 +387,8 @@ const AskYash = () => {
               );
             })}
 
-            {busy && load && (
-              <div style={{ padding: '4px 2px 14px' }}>
-                <div style={{
-                  fontSize: '0.75rem', marginBottom: 6, color: dk ? '#9ca3af' : '#6b7280',
-                }}>
-                  {load.pct > 0 ? `Downloading model… ${load.pct}%` : load.text}
-                </div>
-                <div style={{
-                  height: 4, borderRadius: 2, overflow: 'hidden',
-                  background: dk ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
-                }}>
-                  <div style={{
-                    height: '100%', width: `${load.pct}%`, background: ACCENT,
-                    transition: 'width 0.3s ease',
-                  }} />
-                </div>
-                <div style={{ fontSize: '0.7rem', marginTop: 6, color: dk ? '#6b7280' : '#9ca3af' }}>
-                  One time only. Your browser caches it.
-                </div>
-              </div>
-            )}
 
-            {busy && !load && !msgs[msgs.length - 1]?.streaming && (
+            {busy && !msgs[msgs.length - 1]?.streaming && (
               <div style={{ display: 'flex', gap: 5, padding: '6px 2px 12px' }}>
                 {[0, 1, 2].map((i) => (
                   <span key={i} style={{
