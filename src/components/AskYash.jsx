@@ -90,7 +90,71 @@ const OPENERS = [
   'Is he a fit for a backend role?',
 ];
 
-const Bubble = ({ role, text, dk }) => {
+
+// ── Minimal markdown for chat answers. The models emit **bold**, numbered lists and bullets, and
+//    the bubble rendered them as literal asterisks because it printed plain text.
+//
+// ⛔ NOT dangerouslySetInnerHTML, and no markdown library. This text comes from a model that a
+//    visitor can steer, so it is untrusted input: injecting it as HTML is an XSS hole on a page
+//    that carries his name. Everything below builds REACT ELEMENTS, so text can never become
+//    markup, and only the four things the models actually produce are handled.
+const inline = (text, keyBase) => {
+  // **bold** and `code`, applied to plain text only.
+  const out = [];
+  const re = /(\*\*([^*]+)\*\*|`([^`]+)`)/g;
+  let last = 0, m, i = 0;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    if (m[2] !== undefined) out.push(<strong key={`${keyBase}b${i++}`}>{m[2]}</strong>);
+    else out.push(
+      <code key={`${keyBase}c${i++}`} style={{
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.86em',
+        background: 'rgba(127,127,127,0.16)', padding: '1px 4px', borderRadius: 4,
+      }}>{m[3]}</code>
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+};
+
+const Markdown = ({ text }) => {
+  const blocks = [];
+  let list = null;                     // {ordered, items[]}
+  const flush = () => {
+    if (!list) return;
+    const Tag = list.ordered ? 'ol' : 'ul';
+    blocks.push(
+      <Tag key={`l${blocks.length}`} style={{ margin: '6px 0', paddingLeft: 20 }}>
+        {list.items.map((it, i) => (
+          <li key={i} style={{ marginBottom: 3 }}>{inline(it, `${blocks.length}-${i}`)}</li>
+        ))}
+      </Tag>
+    );
+    list = null;
+  };
+  for (const raw of String(text).split('\n')) {
+    const line = raw.trimEnd();
+    const ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    const ul = line.match(/^\s*[-*•]\s+(.*)$/);
+    if (ol || ul) {
+      const ordered = !!ol;
+      if (!list || list.ordered !== ordered) { flush(); list = { ordered, items: [] }; }
+      list.items.push((ol || ul)[1]);
+      continue;
+    }
+    flush();
+    if (!line.trim()) continue;
+    blocks.push(
+      <p key={`p${blocks.length}`} style={{ margin: '0 0 8px' }}>{inline(line, `p${blocks.length}`)}</p>
+    );
+  }
+  flush();
+  // Trailing margin on the last block would pad the bubble unevenly.
+  return <div style={{ display: 'contents' }}>{blocks}</div>;
+};
+
+const Bubble = ({ role, text, dk, streaming }) => {
   const mine = role === 'user';
   return (
     <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
@@ -101,13 +165,20 @@ const Bubble = ({ role, text, dk }) => {
           borderRadius: mine ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
           fontSize: '0.9rem',
           lineHeight: 1.55,
-          whiteSpace: 'pre-wrap',
+          overflowWrap: 'anywhere',
           background: mine ? ACCENT : dk ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)',
           color: mine ? '#fff' : dk ? '#e5e7eb' : '#1f2937',
           border: mine ? 'none' : `1px solid ${dk ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)'}`,
         }}
       >
-        {text}
+        {mine ? text : <Markdown text={text} />}
+        {streaming && (
+          <span aria-hidden="true" style={{
+            display: 'inline-block', width: 7, height: 13, marginLeft: 2,
+            background: 'currentColor', opacity: 0.55, verticalAlign: '-2px',
+            animation: 'pulse 1s step-end infinite',
+          }} />
+        )}
       </div>
     </div>
   );
@@ -140,7 +211,17 @@ const AskYash = () => {
   const endRef = useRef(null);
   const inputRef = useRef(null);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, busy]);
+  const scrollerRef = useRef(null);
+  const stickRef = useRef(true);
+  const onScroll = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  };
+  useEffect(() => {
+    if (!stickRef.current) return;
+    endRef.current?.scrollIntoView({ block: 'end' });
+  }, [msgs, busy]);
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
   // Re-check on open and after a load, so the footer reflects reality rather than this session.
   useEffect(() => { if (open) modelCached().then(setCached); }, [open, load]);
@@ -161,6 +242,23 @@ const AskYash = () => {
     const fail = (why) => setMsgs([...next, { role: 'assistant', content: why }]);
 
     try {
+      // Both modes append into the SAME assistant bubble as tokens arrive, so the two paths feel
+      // identical to a visitor and the scroll does not jump when a finished answer lands whole.
+      const push = (delta) =>
+        setMsgs((cur) => {
+          const copy = cur.slice();
+          const last = copy[copy.length - 1];
+          if (last && last.role === 'assistant' && last.streaming) {
+            copy[copy.length - 1] = { ...last, content: last.content + delta };
+          } else {
+            copy.push({ role: 'assistant', content: delta, streaming: true });
+          }
+          return copy;
+        });
+      const settle = () =>
+        setMsgs((cur) => cur.map((m, i) =>
+          i === cur.length - 1 && m.streaming ? { ...m, streaming: false } : m));
+
       if (mode === 'local') {
         // ── ON DEVICE. Nothing leaves the browser; no request is made at all.
         const engine =
@@ -170,27 +268,43 @@ const AskYash = () => {
             setLoad({ pct, text: p.text || 'Loading model' });
           }));
         setLoad(null);
-        const r = await engine.chat.completions.create({
+        const stream = await engine.chat.completions.create({
           messages: [{ role: 'system', content: LOCAL_SYSTEM }, ...next.slice(-LOCAL_MAX_TURNS)],
           temperature: 0.3,
           max_tokens: 400,
+          stream: true,
         });
-        setMsgs([...next, {
-          role: 'assistant',
-          content: r.choices?.[0]?.message?.content?.trim() || "I didn't catch that. Could you rephrase?",
-        }]);
+        for await (const part of stream) {
+          const delta = part?.choices?.[0]?.delta?.content;
+          if (delta) push(delta);
+        }
+        settle();
       } else {
-        // ── CLOUD. The Worker owns the prompt and the facts.
+        // ── CLOUD. The Worker owns the prompt and the facts, and streams plain text back.
         const r = await fetch(API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: next }),
         });
-        const data = await r.json();
-        setMsgs([...next, {
-          role: 'assistant',
-          content: data.reply || data.error || 'Something went wrong. Email yash at yashdevdarekar94@gmail.com',
-        }]);
+        // An error comes back as JSON, a good answer as a text stream. Branch on the type rather
+        // than assuming, so a 429 or a 502 still renders its message instead of raw JSON.
+        const ctype = r.headers.get('Content-Type') || '';
+        if (!r.ok || ctype.includes('application/json')) {
+          const data = await r.json().catch(() => ({}));
+          setMsgs([...next, {
+            role: 'assistant',
+            content: data.reply || data.error || 'Something went wrong. Email Yash at yashdevdarekar94@gmail.com',
+          }]);
+        } else {
+          const reader = r.body.getReader();
+          const dec = new TextDecoder();
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            push(dec.decode(value, { stream: true }));
+          }
+          settle();
+        }
       }
     } catch (err) {
       // ⛔ Say what to do next. A dead chat widget on a portfolio is worse than no widget, so the
@@ -294,7 +408,7 @@ const AskYash = () => {
                     a person. Saying it plainly is also the part that demonstrates the skill, so it
                     stays visible rather than hidden in a tooltip. */}
                 <div style={{ fontSize: '0.72rem', color: dk ? '#9ca3af' : '#6b7280' }}>
-                  AI assistant · answers from his verified background
+                  AI assistant · answers about Yash, from his verified background
                 </div>
               </div>
               <button
@@ -352,14 +466,18 @@ const AskYash = () => {
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '15px 15px 4px' }}>
+          <div
+            ref={scrollerRef}
+            onScroll={onScroll}
+            style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: '15px 15px 4px' }}
+          >
             {msgs.length === 0 && (
               <div style={{ marginBottom: 14 }}>
                 <p style={{
                   fontSize: '0.88rem', lineHeight: 1.6, margin: '0 0 10px',
                   color: dk ? '#d1d5db' : '#374151',
                 }}>
-                  Hi — I&apos;m an AI assistant Yash built for this site. Ask me what he&apos;s
+                  Hi, I&apos;m an AI assistant Yash built for this site. Ask me what he&apos;s
                   shipped, how he works, or whether he fits a role you&apos;re hiring for.
                 </p>
                 {/* ⛔ The cost of on-device mode is the visitor's bandwidth, so it is stated
@@ -415,7 +533,9 @@ const AskYash = () => {
               </div>
             )}
 
-            {msgs.map((m, i) => <Bubble key={i} role={m.role} text={m.content} dk={dk} />)}
+            {msgs.map((m, i) => (
+              <Bubble key={i} role={m.role} text={m.content} dk={dk} streaming={m.streaming} />
+            ))}
 
             {busy && load && (
               <div style={{ padding: '4px 2px 14px' }}>
@@ -434,12 +554,12 @@ const AskYash = () => {
                   }} />
                 </div>
                 <div style={{ fontSize: '0.7rem', marginTop: 6, color: dk ? '#6b7280' : '#9ca3af' }}>
-                  One time only — your browser caches it.
+                  One time only. Your browser caches it.
                 </div>
               </div>
             )}
 
-            {busy && !load && (
+            {busy && !load && !msgs[msgs.length - 1]?.streaming && (
               <div style={{ display: 'flex', gap: 5, padding: '6px 2px 12px' }}>
                 {[0, 1, 2].map((i) => (
                   <span key={i} style={{

@@ -56,25 +56,25 @@ for (const [name, hay, phrases] of MUST_NOT) {
   }
 }
 
-// ⛔ NO THIRD-PERSON PRONOUNS. The assistant speaks AS him, and it recites instruction text as
-//    readily as fact text: 15 of 45 live answers mixed "I" and "he", including "...how I managed
-//    the integrity of the LISA retrieval layer, you can reach him at ...". Every pronoun the
-//    model can read must already be first person. Two question strings are quoted deliberately
-//    (they are what a VISITOR types) and are allowed.
-// Lines that legitimately name Yash in the third person: they define who the ASSISTANT is in
-// relation to him, and are never restated as a fact about himself. Everything else must be "I".
-const ALLOWED_3P = [
-  'where is he weakest', 'how good is he at', 'what is he still learning',
-  "yash darekar's portfolio", 'assistant yash built', 'in his first-person voice',
-  'even when the visitor says',   // the rule that FORBIDS third person must quote it to forbid it
+// ⛔ NO FIRST-PERSON PRONOUNS ABOUT YASH. The voice was first person until 2026-10-19 and this
+//    test asserted the exact opposite; it is flipped deliberately, not by accident. The reason
+//    for third person is that a recruiter pastes answers into Slack and ATS notes where the "AI
+//    assistant" label does not travel, and a first-person excerpt reads as his own words. The
+//    model recites instruction text as readily as fact text, so every pronoun it can READ has to
+//    already be third person. Lines about the ASSISTANT itself ("I don't have that detail") are
+//    allowed, and listed explicitly.
+const ALLOWED_1P = [
+  "i don't have that detail",   // the assistant speaking about itself
+  'never "i" or "my"',          // the rule that forbids first person must quote it
+  'never "i", "my" or "me"',
 ];
 for (const [name, hay] of [['cloud profile', CLOUD], ['on-device profile', LOCAL_SYSTEM]]) {
   const lines = hay.split('\n').filter((l) => {
     const low = l.toLowerCase();
-    if (ALLOWED_3P.some((a) => low.includes(a))) return false;
-    return /\b(he|him|his)\b/i.test(l);
+    if (ALLOWED_1P.some((a) => low.includes(a))) return false;
+    return /\b(I|my|me|myself)\b/.test(l);
   });
-  for (const l of lines) { console.error(`THIRD PERSON in ${name}: "${l.trim().slice(0, 90)}"`); bad++; }
+  for (const l of lines) { console.error(`FIRST PERSON in ${name}: "${l.trim().slice(0, 90)}"`); bad++; }
 }
 
 // ⛔ No em dashes anywhere a model can copy them from. Models mirror source punctuation, and the
