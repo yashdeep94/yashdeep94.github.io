@@ -43,6 +43,28 @@ const hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
 // 🚨 The engine is ~14MB of JS plus ~880MB of weights. It is dynamically imported on FIRST USE of
 //    on-device mode, never at page load, so a recruiter who never touches the toggle pays nothing
 //    for its existence. Vite code-splits it into its own chunk automatically.
+// WebLLM stores weights in the browser's Cache Storage under these three names. Checking and
+// clearing them uses the NATIVE caches API, so the widget can report and delete an 880MB download
+// WITHOUT importing the 6MB engine just to ask a question about it.
+// ⚠️ `caches` is secure-context only (https or localhost) and throws in some private modes, so
+//    every call is guarded and the UI simply hides when it is unavailable.
+const WEBLLM_CACHES = ['webllm/model', 'webllm/wasm', 'webllm/config'];
+
+const modelCached = async () => {
+  try {
+    if (typeof caches === 'undefined') return false;
+    const keys = await caches.keys();
+    return keys.includes('webllm/model');
+  } catch { return false; }
+};
+
+const clearModelCache = async () => {
+  try {
+    await Promise.all(WEBLLM_CACHES.map((k) => caches.delete(k)));
+    return true;
+  } catch { return false; }
+};
+
 let enginePromise = null;
 const getEngine = async (onProgress) => {
   if (enginePromise) return enginePromise;
@@ -114,11 +136,14 @@ const AskYash = () => {
     return () => mq.removeEventListener('change', on);
   }, []);
   const engineRef = useRef(null);
+  const [cached, setCached] = useState(false);
   const endRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, busy]);
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
+  // Re-check on open and after a load, so the footer reflects reality rather than this session.
+  useEffect(() => { if (open) modelCached().then(setCached); }, [open, load]);
   useEffect(() => {
     const esc = (e) => e.key === 'Escape' && setOpen(false);
     window.addEventListener('keydown', esc);
@@ -344,9 +369,32 @@ const AskYash = () => {
                   color: dk ? '#9ca3af' : '#6b7280',
                 }}>
                   {mode === 'local'
-                    ? `On-device mode: the model runs entirely in your browser and nothing you type leaves it. First question downloads about ${LOCAL_MODEL_MB}MB, and it is a small model, so answers are shorter than Cloud.`
+                    ? `On-device mode: the model runs entirely in your browser and nothing you type leaves it. ${cached ? 'It is already downloaded, so answers start immediately.' : `Your first question downloads about ${LOCAL_MODEL_MB}MB.`} It is a small model, so answers are shorter than Cloud.`
                     : 'Running on Cloudflare Workers AI. Switch to On device above to run the model in your own browser instead.'}
                 </p>
+                {/* ⛔ If this page put ~880MB on someone's disk, it owes them a way to see that and
+                    take it back, without hunting through DevTools. Shown whenever the cache
+                    exists, in either mode, because the bytes are there either way. */}
+                {cached && (
+                  <p style={{ fontSize: '0.74rem', margin: '0 0 14px', color: dk ? '#9ca3af' : '#6b7280' }}>
+                    ~{LOCAL_MODEL_MB}MB of model weights are stored in this browser.{' '}
+                    <button
+                      onClick={async () => {
+                        if (await clearModelCache()) {
+                          engineRef.current = null;
+                          enginePromise = null;
+                          setCached(false);
+                        }
+                      }}
+                      style={{
+                        background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                        font: 'inherit', color: ACCENT, textDecoration: 'underline',
+                      }}
+                    >
+                      Remove them
+                    </button>
+                  </p>
+                )}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                   {OPENERS.map((q) => (
                     <button

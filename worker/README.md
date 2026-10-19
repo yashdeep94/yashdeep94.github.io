@@ -38,7 +38,30 @@ running entirely in your browser" is itself worth showing an AI-focused hiring m
 because it is a genuine privacy answer for anyone who would rather not have their questions
 leave their machine.
 
-The two do **not** share a fact base. `worker/src/profile.js` is the full one; on-device uses the
+### Where the on-device model is stored, and how to remove it
+
+WebLLM writes the weights into the browser's **Cache Storage**, under `webllm/model`,
+`webllm/wasm` and `webllm/config`. They persist across reloads and survive closing the tab. They
+are per origin, so a download on this site is not shared with any other.
+
+The widget shows a line saying how much is stored with a **Remove them** control, whenever the
+cache exists. To check or clear it by hand instead:
+
+- **DevTools** (any Chromium browser or Safari): Application tab, Cache Storage in the sidebar.
+  The three `webllm/*` entries are it. Right click, Delete.
+- **Console, any origin that loaded it:**
+  ```js
+  await caches.keys()                      // look for webllm/model
+  await caches.delete('webllm/model')      // and webllm/wasm, webllm/config
+  await navigator.storage.estimate()       // bytes this origin is using
+  ```
+- **Browser settings:** Chrome, Settings, Privacy, Third-party cookies, See all site data, then
+  find the site and Delete. Safari, Settings, Advanced, Website Data.
+
+⚠️ Clearing site data for the origin also clears it. Nothing is written outside the browser: there
+is no file on disk to find, and nothing is sent anywhere.
+
+The two fact bases do **not** share content. `worker/src/profile.js` is the full one; on-device uses the
 condensed `src/data/localProfile.js`, because 1B models have a 4,096-token context window and the
 full profile would crowd out the conversation. Switching modes clears the transcript for that
 reason, rather than carrying one model's history into a window that cannot hold it.
