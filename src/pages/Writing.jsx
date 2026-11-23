@@ -51,7 +51,7 @@ const Writing = () => {
 
   return (
     <section style={wrap}>
-      <Link to="/writing" style={{ color: faint, fontSize: '13px', textDecoration: 'none' }}>&larr; Writing</Link>
+      <Link to="/writing" style={{ color: faint, fontSize: '13px', textDecoration: 'none', display: 'inline-block', padding: '6px 2px' }}>&larr; Writing</Link>
       <h1 style={{ fontSize: 'clamp(24px,4vw,34px)', fontWeight: 700, color: strong, margin: '16px 0 6px', lineHeight: 1.25 }}>
         {a.title}
       </h1>

@@ -55,6 +55,8 @@ const Footer = () => {
               target="_blank"
               rel="noopener noreferrer"
               style={{
+                minWidth: '36px', minHeight: '36px', display: 'inline-flex',
+                alignItems: 'center', justifyContent: 'center',
                 color: dk ? '#6b7280' : '#6b7280',
                 transition: 'color 0.3s',
               }}

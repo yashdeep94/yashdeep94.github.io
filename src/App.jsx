@@ -5,10 +5,9 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AskYash from './components/AskYash';
 import Home from './pages/Home';
-import Apps from './pages/Apps';
 import Writing from './pages/Writing';
 
-// Route changes must reset scroll position. Navigating from a scrolled Home to /apps was
+// Route changes must reset scroll position. Navigating from a scrolled Home to another route was
 // landing the visitor at y=695: past the heading, in the middle of the card grid.
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -38,7 +37,6 @@ const AppContent = () => {
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/apps" element={<Apps />} />
             <Route path="/writing" element={<Writing />} />
             <Route path="/writing/:slug" element={<Writing />} />
           </Routes>

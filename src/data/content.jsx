@@ -58,118 +58,68 @@ export const otherProjects = [
 
 // ===== TECHNOLOGIES =====
 export const technologies = [
+  // Rewritten 2026-11-23 to match the resume's curated skills lines. The old list both
+  // UNDER-sold (no Rust, Lambda, DynamoDB, SQS, CloudFront, Kubernetes, LangGraph, MLflow,
+  // Databricks - i.e. none of the platform or AI work) and OVER-sold (Vanilla JS, Bootstrap,
+  // Cron Jobs, HTML, CSS and Bash listed as Languages, Jupyter Notebook, R Studio).
+  // Every entry here has a row in the resume repo's claims.csv. Flask is deliberately absent:
+  // its ledger row reads `contradicted`.
   {
     name: "Languages",
-    items: ["Python", "JavaScript", "TypeScript", "Java", "C++", "Kotlin", "R", "SQL", "HTML", "CSS", "Bash"],
+    items: ["Python", "Rust", "TypeScript", "JavaScript", "Java", "C++", "SQL"],
+  },
+  {
+    name: "Backend",
+    items: ["FastAPI", "Django", "Node.js", "LangGraph", "MLflow", "REST APIs", "Celery"],
   },
   {
     name: "Frontend",
-    items: ["React.js", "Jetpack Compose", "Material UI", "Tailwind CSS", "Bootstrap", "Vanilla JS"],
+    items: ["React", "Next.js", "Tailwind CSS"],
   },
   {
-    name: "Backend & APIs",
-    items: ["Django", "Flask", "Node.js", "Express.js", "REST APIs", "Celery", "Redis", "Cron Jobs"],
+    name: "Data",
+    items: ["DynamoDB", "PostgreSQL", "MySQL", "Redis", "Delta Lake", "Databricks Vector Search"],
   },
   {
-    name: "Databases",
-    items: ["MySQL", "PostgreSQL", "MongoDB", "SQLite", "Redis"],
-  },
-  {
-    name: "Cloud & DevOps",
+    name: "Cloud & Infrastructure",
     items: [
-      "AWS (EC2, S3, ASG, ALB, CloudWatch)",
-      "GCP", "DigitalOcean", "On-Prem Deployment",
-      "Docker", "Terraform", "Packer",
-      "CI/CD", "GitHub Actions",
-      "Auto Scaling", "Load Balancing",
-      "Monitoring & Logging", "Alerting",
-      "Linux / Ubuntu", "Networking",
+      "AWS (Lambda, DynamoDB, S3, SQS, CloudFront, EC2, RDS)",
+      "Serverless", "Terraform", "Docker", "Kubernetes", "Helm",
+      "CI/CD", "GitHub Actions", "Linux", "GCP", "Databricks",
+      "Prometheus", "Grafana", "Loki", "nginx",
     ],
   },
   {
-    name: "AI / ML & Data",
+    name: "AI / ML",
     items: [
-      "PyTorch", "TensorFlow",
-      "Neural Networks", "Deep Learning", "Diffusion Models",
-      "RAG", "Fine-Tuning", "Custom Model Training",
-      "SLURM (HPC Clusters)",
-      "Scikit-learn", "Pandas", "NumPy",
-      "Jupyter Notebook", "R Studio",
+      "PyTorch", "TensorFlow", "RAG", "Fine-Tuning",
+      "DDP / FSDP", "SLURM", "Scikit-learn", "Pandas", "NumPy",
     ],
-  },
-  {
-    name: "Tools & Testing",
-    items: ["Git", "GitHub", "VS Code", "Postman", "Docker", "VMs", "Automated Testing", "DSA"],
   },
 ];
 
+
 // ===== APPS / TOOLS =====
-export const apps = [
-  {
-    id: "json-formatter",
-    title: "JSON Formatter",
-    description: "Paste raw JSON and get beautifully formatted, syntax-highlighted output with validation.",
-    icon: "Braces",
-    tags: ["JavaScript", "Parsing"],
-    color: "#f59e0b",
-    route: "/apps/json-formatter",
-    ready: false,
-  },
-  {
-    id: "regex-tester",
-    title: "Regex Tester",
-    description: "Write and test regular expressions with live matching, groups, and cheat sheet.",
-    icon: "Search",
-    tags: ["JavaScript", "Regex"],
-    color: "#10b981",
-    route: "/apps/regex-tester",
-    ready: false,
-  },
-  {
-    id: "color-palette",
-    title: "Color Palette Generator",
-    description: "Generate harmonious color palettes from a base color. Copy HEX, RGB, HSL values.",
-    icon: "Palette",
-    tags: ["React", "Design"],
-    color: "#8b5cf6",
-    route: "/apps/color-palette",
-    ready: false,
-  },
-  {
-    id: "markdown-preview",
-    title: "Markdown Previewer",
-    description: "Write markdown on the left, see rendered HTML on the right in real-time.",
-    icon: "FileText",
-    tags: ["React", "Markdown"],
-    color: "#3b82f6",
-    route: "/apps/markdown-preview",
-    ready: false,
-  },
-  {
-    id: "unit-converter",
-    title: "Unit Converter",
-    description: "Convert between units of length, weight, temperature, speed, and more.",
-    icon: "ArrowLeftRight",
-    tags: ["React", "Utility"],
-    color: "#ec4899",
-    route: "/apps/unit-converter",
-    ready: false,
-  },
-  {
-    id: "password-generator",
-    title: "Password Generator",
-    description: "Generate strong passwords with custom length, symbols, numbers, and strength meter.",
-    icon: "Shield",
-    tags: ["JavaScript", "Security"],
-    color: "#ef4444",
-    route: "/apps/password-generator",
-    ready: false,
-  },
-];
+// ⛔ THE SIX MINI-APPS WERE DROPPED 2026-11-23, and the reasoning is worth keeping.
+//    All six were ready:false - a JSON formatter, regex tester, colour palette generator,
+//    markdown previewer, unit converter and password generator, none of them built. They were
+//    removed rather than finished because:
+//      1. They are commodity. Thousands of each exist; six of them differentiate nothing.
+//      2. They contradict the lane. The positioning is AI platform / backend / infrastructure;
+//         six browser utilities read as frontend hobbyist.
+//      3. The opportunity cost is the write-ups, which are the one format nobody else has and for
+//         which there is unusually good raw material (a real 0->1, a five-year production system,
+//         a migration with a rejected alternative and enumerated failure modes).
+//    ➡️ Replaced by: one card + one write-up + one interactive diagram per real system.
+
 
 // ===== NAV LINKS =====
 export const navLinks = [
   { name: "Home", path: "/" },
   { name: "Writing", path: "/writing" },
-  { name: "Apps", path: "/apps" },
+  // ⛔ "Apps" removed from the nav 2026-11-23: all SIX apps are ready:false, so the page was
+  //    six "Coming soon" cards plus a "More apps coming soon!" banner, advertised in the primary
+  //    nav. For a candidate whose case rests on having shipped things, a page of unshipped things
+  //    is worse than no page. The /apps route still resolves; it is simply not promoted.
+  //    Put it back the day one of them actually works.
 ];
