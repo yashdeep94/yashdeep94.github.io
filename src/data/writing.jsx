@@ -4,6 +4,66 @@
 // ⛔ EVERY NUMBER HERE COMES FROM cloud/docs/ IN THE PRIVATE REPO. Verify before publishing.
 export const writing = [
   {
+    slug: 'what-i-alert-on',
+    title: 'What I alert on, and what I deliberately do not',
+    date: 'November 2026',
+    summary:
+      'A single Ubuntu box runs the software two small businesses depend on. This is how it is watched, and why most of the rules are about absence rather than failure.',
+    sections: [
+      {
+        h: 'The box',
+        p: [
+          'One Ubuntu server, fourteen services under Docker Compose, behind an nginx TLS reverse proxy with certificates renewed automatically. A default-deny firewall, fail2ban, and WireGuard for anything that needs to reach in. GitHub Actions builds images to a registry and the box pulls them. I registered the domains and run their DNS at the registrar.',
+          'It started as a media server. I tried Plex, moved to Jellyfin, and somewhere along the way it became the place two businesses run from, which changed what watching it means.',
+        ],
+      },
+      {
+        h: 'Prometheus and Grafana are not the interesting part',
+        p: [
+          'Prometheus scrapes node-exporter and cAdvisor for host and container metrics. Grafana reads it with its datasources provisioned as code. Loki and Promtail ingest nginx logs. None of that is unusual and none of it is the point.',
+          'The point is which sixteen things are worth waking up for, and the answers I find interesting are the ones about silence.',
+        ],
+      },
+      {
+        h: 'Most of the rules are about absence',
+        p: [
+          'The portal sync is supposed to run on a schedule. The rule does not watch for sync errors; it fires when there has been no record of a completed sync for two hours. Crucially it also fires when there are no logs at all, which is the case a failure-watching rule misses entirely: a worker that died quietly produces no errors.',
+          'The same shape covers the overnight tasks, with a 26-hour window on a daily job so one late run is not a page. An error you can see is a problem you already know about. The absence of a success is the one that hides.',
+        ],
+      },
+      {
+        h: 'One rule exists because another rule has a blind spot',
+        p: [
+          'There is a memory rule: alert when free memory drops below ten percent, evaluated over fifteen minutes. There is also a separate rule that fires when the kernel\'s OOM killer runs.',
+          'The second exists because of the first. A process that balloons and gets killed inside the fifteen-minute window never shows up in the memory rule, so the only evidence is that the kernel reaped something. Writing the second rule meant admitting the first one has a hole I could not close by tuning it.',
+        ],
+      },
+      {
+        h: 'Predict, where prediction is honest',
+        p: [
+          'Disk gets two rules. One fires under ten percent free, which is the normal thing. The other takes the last twenty-four hours of trend and fires if it reaches zero within fourteen days.',
+          'The second is more useful and I trust it less. A log that rotates, a backup that lands, a database that vacuums: any of them can make a fortnight of runway look like two days. It is a prompt to go and look, not a statement that something is wrong, and it is written to be read that way.',
+        ],
+      },
+      {
+        h: 'What I deliberately do not alert on',
+        p: [
+          'There is no page for a slow page load, because the traffic here is a handful of staff users and a percentile over that sample is noise wearing a number.',
+          'There is no alert on CPU, because on this box high CPU is usually a sync doing its job. Alerting on it would train me to ignore it, and an alert you have learned to ignore is worse than no alert.',
+          'And there is nothing paging me at three in the morning. The businesses operate in daylight hours and I am the only person who could act. A page that cannot be actioned is not monitoring, it is just being woken up.',
+        ],
+      },
+      {
+        h: 'What this is not',
+        p: [
+          'This is Grafana\'s own alerting, provisioned from a rules file. There is no Alertmanager, no on-call rotation, no escalation policy, and no incident process, because there is one operator and he is me.',
+          'I have no uptime number to show you. Nothing here measures its own availability, which is the honest limitation of being both the system and the person watching it.',
+        ],
+      },
+    ],
+  },
+
+  {
     slug: 'agent-decisions',
     title: 'Six decisions in a production agent, and the one I got wrong',
     date: 'November 2026',

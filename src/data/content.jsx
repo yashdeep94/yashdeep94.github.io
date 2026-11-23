@@ -46,6 +46,7 @@ export const featured = {
 export const otherProjects = [
   {
     name: "Self-hosted infrastructure",
+    href: "/writing/what-i-alert-on",
     line: "A 14-service Docker Compose stack on Ubuntu behind an nginx TLS reverse proxy, with Prometheus, Grafana and Loki for observability, and a default-deny firewall, fail2ban and WireGuard.",
   },
   {

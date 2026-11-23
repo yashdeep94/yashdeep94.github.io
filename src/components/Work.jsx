@@ -93,7 +93,16 @@ const Work = () => {
             <div style={{ fontWeight: 600, marginBottom: '4px', color: dk ? '#d1d5db' : '#1f2937' }}>
               {p.name}
             </div>
-            <p style={{ margin: 0, color: muted, fontSize: '14px', lineHeight: 1.6 }}>{p.line}</p>
+            <p style={{ margin: 0, color: muted, fontSize: '14px', lineHeight: 1.6 }}>
+              {p.line}
+              {p.href && (
+                <>
+                  {' '}
+                  <Link to={p.href} style={{ color: dk ? '#a78bfa' : '#6366f1', textDecoration: 'none',
+                    borderBottom: `1px solid ${dk ? '#a78bfa40' : '#6366f140'}` }}>Read more</Link>
+                </>
+              )}
+            </p>
           </div>
         ))}
       </div>
