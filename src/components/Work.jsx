@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { work, featured, otherProjects } from '../data/content';
 
@@ -54,7 +55,17 @@ const Work = () => {
         <p style={{ margin: '0 0 14px', color: muted, fontSize: '15px', lineHeight: 1.7 }}>
           {featured.body}
         </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        <Link
+          to="/writing/serverless-rebuild"
+          style={{
+            display: 'inline-block', marginBottom: '14px', fontSize: '14px',
+            color: dk ? '#a78bfa' : '#6366f1', textDecoration: 'none',
+            borderBottom: `1px solid ${dk ? '#a78bfa40' : '#6366f140'}`,
+          }}
+        >
+          Read the write-up, including the case for not doing it
+        </Link>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
           {featured.stack.map((s) => (
             <span key={s} style={{
               fontSize: '12px', padding: '3px 9px', borderRadius: '6px',

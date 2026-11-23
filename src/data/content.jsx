@@ -170,5 +170,6 @@ export const apps = [
 // ===== NAV LINKS =====
 export const navLinks = [
   { name: "Home", path: "/" },
+  { name: "Writing", path: "/writing" },
   { name: "Apps", path: "/apps" },
 ];
