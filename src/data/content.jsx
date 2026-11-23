@@ -2,12 +2,11 @@
 export const personalInfo = {
   name: "Yash Darekar",
   roles: [
-    "Cloud Engineer",
-    "Full Stack Developer",
-    "AI & ML Engineer",
-    "Problem Solver",
+    "AI Platform Engineer",
+    "Backend Engineer",
+    "Cloud Infrastructure",
   ],
-  bio: "Cloud Engineer & Full Stack Developer shipping production apps on bare metal, DigitalOcean, and AWS. From Django + React to Terraform infrastructure and GPU-accelerated ML pipelines I build end-to-end. MS Information Systems at Northeastern, graduating December 2026.",
+  bio: "I build and run production systems. At Eisai I took a GenAI agent from an idea to production in eight months; two small businesses run on software I build and operate, re-architected this year onto serverless AWS in Rust. MS Information Systems at Northeastern, graduating December 2026.",
   email: "yashdevdarekar94@gmail.com",
   location: "Boston, MA",
   linkedin: "https://linkedin.com/in/yashdarekar",
