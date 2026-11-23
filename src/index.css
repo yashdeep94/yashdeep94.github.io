@@ -50,6 +50,18 @@ html {
   html { scroll-behavior: smooth; }
 }
 
+/* ⛔ VIEW TRANSITIONS WERE TRIED AND REVERTED 2026-11-23, with the measurement, so nobody
+   re-adds them blind. The research called them "broadly available, cheap, and reads as polish
+   rather than as effect" — but that assumes a data router is already in place. Here:
+     · <Link viewTransition> is a NO-OP under the component <HashRouter>. Measured:
+       document.startViewTransition was called 0 times across a route change.
+     · Making it fire required migrating to createHashRouter + RouterProvider, which worked
+       (1 call, all 5 routes fine) and cost +53 kB raw / +17 kB GZIPPED — 77 -> 94 kB, i.e. 22%
+       more JavaScript on every visit for a 120/180ms cross-fade.
+   ➡️ Reverted. On a site whose argument is engineering judgment, that is the wrong trade, and the
+      polish actually came from the tokens, the focus ring and the uniform interaction
+      transitions below — which cost nothing. Revisit only if the data router is wanted anyway. */
+
 /* ===== INTERACTION STATE =====
    Every interactive element responds the same way. This is where the "polished"
    feeling actually comes from. */
