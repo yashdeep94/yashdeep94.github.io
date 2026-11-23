@@ -28,8 +28,8 @@ export const writing = [
       {
         h: 'The option I should have taken',
         p: [
-          'The honest baseline was to not migrate. Keep everything at home, put Cloudflare in front of it for DNS and CDN, drop the static IP, and save about ₹1,950 a year with no rewrite at all. Today the hosting cost is almost entirely that static IP.',
-          'So the cloud move does not pay for itself. It buys availability and it buys me a serverless system I have actually operated rather than read about. I decided that was worth it, and I think stating that plainly is more useful than inventing a cost argument that the measurements do not support.',
+          'The honest baseline was to not migrate. Keep everything at home, put Cloudflare in front of it for DNS and CDN, drop the static IP, and save about ₹1,950 a year, roughly $19, with no rewrite at all. Today the hosting cost is almost entirely that static IP.',
+          'The whole design had to live inside always-free tiers, because any always-on paid product breaks a budget this size by itself. So the cloud move does not pay for itself. It buys availability and it buys me a serverless system I have actually operated rather than read about. I decided that was worth it, and I think stating that plainly is more useful than inventing a cost argument that the measurements do not support.',
         ],
       },
       {
@@ -42,6 +42,7 @@ export const writing = [
       },
       {
         h: 'Money, and the part that is actually hard',
+        diagram: 'moneyPath',
         p: [
           'Recharges are the only place where a mistake is expensive, because the money leaves before the record is written. A business row, an outbox record and an idempotency key are written in one transaction, so a retried request cannot charge a customer twice.',
           'Jobs reach the worker through DynamoDB Streams into a relay, then SQS FIFO with the message group set to the provider login. That keeps one money job per login in flight at a time, which is a property of the upstream portal rather than of my system. Dead-letter queues catch the rest, and every consumer records a message id before it acts.',
