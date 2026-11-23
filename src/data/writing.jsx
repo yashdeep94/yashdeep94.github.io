@@ -4,6 +4,73 @@
 // ⛔ EVERY NUMBER HERE COMES FROM cloud/docs/ IN THE PRIVATE REPO. Verify before publishing.
 export const writing = [
   {
+    slug: 'agent-decisions',
+    title: 'Six decisions in a production agent, and the one I got wrong',
+    date: 'November 2026',
+    summary:
+      'An AI support agent for lab equipment in a regulated environment. The architecture is my employer\'s; the decisions are mine, and the decisions are the interesting half anyway.',
+    sections: [
+      {
+        h: 'What it had to be',
+        p: [
+          'At a pharmaceutical company I built an agent that answers lab instrument and device questions for scientists and IT support staff. It was an idea when I started and a production system eight months later: a LangGraph loop calling Claude, retrieval over 300+ device manuals, and governed SQL functions as tools.',
+          'This is internal enterprise work, so what follows deliberately contains no workspace, catalog, schema or URL. That is less of a loss than it sounds. A chatbot answers questions; an operational system also has to decide who may change the data underneath it, what happens when an answer is wrong, and how content from the internet is kept out of a trusted corpus. Those are decisions, not architecture, and they travel.',
+        ],
+      },
+      {
+        h: 'One: the model never touches the data',
+        diagram: 'trustBoundary',
+        p: [
+          'The rule the whole design rests on. The model names a tool and its arguments and stops there; the backend makes every call on its behalf. That is what makes a read permissioned and a write auditable, rather than taking the model at its word and hoping.',
+        ],
+      },
+      {
+        h: 'Two: human-in-the-loop as a primitive, not a prompt',
+        p: [
+          'Asking a model to check with the user before doing something is a convention it may skip. So the pause is a tool. Calling it suspends the turn and returns a structured request, which the front end renders as real controls, and the answer comes back as state rather than as another sentence in the conversation.',
+          'The difference matters when the question is "may I change this record". A convention that usually holds is not a control.',
+        ],
+      },
+      {
+        h: 'Three: the hardest one, and it looked easy',
+        p: [
+          'The upstream source of device metadata was a human-maintained workbook. Admins also needed to fix data in the app. Two-way sync is the obvious answer and it is the wrong one: it creates source-of-truth ambiguity, and with it conflict resolution and locking, for a problem that does not require either.',
+          'Ingest is one-way. Admin edits live in an overrides layer that is re-applied after every rebuild of the ingested data. Both paths coexist and neither silently clobbers the other. It took longer to decide than to build.',
+        ],
+      },
+      {
+        h: 'Four: when an answer is wrong',
+        p: [
+          'Every turn is instrumented with spans. An admin panel takes a reported bad answer, reads that turn\'s recorded trace, shows each reasoning step and tool call, and generates an explanation of what went wrong. It then emits a ready-to-run correction for a person to apply.',
+          'It does not apply the correction, and it does not re-run the turn. Diagnosis and action are separate on purpose, because the thing being diagnosed is the same kind of system doing the diagnosing.',
+          'I kept both the raw trace and the generated explanation. The trace is exact and unreadable to anyone who is not an ML engineer; the explanation is readable and can itself be wrong. Dropping either one makes the panel worse for somebody.',
+        ],
+      },
+      {
+        h: 'Five: content from the internet is guilty until promoted',
+        p: [
+          'Manuals acquired automatically do not enter the trusted corpus. They stage as non-searchable and become retrievable only after a person promotes them. In a regulated setting the provenance of an answer is part of the answer.',
+        ],
+      },
+      {
+        h: 'Six: the one I got wrong',
+        p: [
+          'I did not commit a dependency lockfile. Builds re-resolved from open version ranges at deploy time, so when a transitive dependency published a breaking major release, it took the service down. Twice, in different packages.',
+          'The second time I traced it to the exact symbol removed from the published wheel, and found that rolling back the code did not help, because redeploying an older commit re-resolved to the same broken version. That is the part worth carrying: reproducible builds are not hygiene, they are an availability requirement, and I learned it the expensive way rather than the cheap one.',
+        ],
+      },
+      {
+        h: 'What I will not claim',
+        p: [
+          'It reached production about a month before my co-op ended, and it was a proof of concept for most of the time before that. I supported it in production, answered questions from the people using it, and handed it over with documentation. That is a handover, not a track record.',
+          'I have no adoption numbers and will not estimate any. New internal tools take time to reach people, and mine had not yet.',
+          'And I was not the only person who worked on this. Every commit in the repository is mine, which is not the same claim.',
+        ],
+      },
+    ],
+  },
+
+  {
     slug: 'serverless-rebuild',
     title: 'Moving a live business onto serverless AWS, and the case for not doing it',
     date: 'November 2026',

@@ -39,6 +39,16 @@ const Work = () => {
               </span>
             </div>
             <p style={{ margin: 0, color: muted, fontSize: '15px', lineHeight: 1.65 }}>{w.line}</p>
+            {w.href && (
+              <Link
+                to={w.href}
+                style={{
+                  display: 'inline-block', marginTop: '8px', fontSize: '14px',
+                  color: dk ? '#a78bfa' : '#6366f1', textDecoration: 'none',
+                  borderBottom: `1px solid ${dk ? '#a78bfa40' : '#6366f140'}`,
+                }}
+              >{w.hrefLabel}</Link>
+            )}
           </div>
         ))}
       </div>

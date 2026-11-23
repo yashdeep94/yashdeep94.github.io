@@ -22,6 +22,8 @@ export const work = [
     when: "Jan \u2013 Aug 2026",
     where: "Cambridge, MA",
     line: "Took LISA from an idea to a production agentic system on Databricks: a LangGraph loop calling Claude across 17 registered tools, with MLflow tracing behind an admin panel that root-causes a reported answer.",
+    href: "/writing/agent-decisions",
+    hrefLabel: "Six decisions, and the one I got wrong",
   },
   {
     org: "Yashdeep Cable Network \u00b7 SS Transline",

@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { writing } from '../data/writing';
-import MoneyPath from '../components/MoneyPath';
+import StepDiagram from '../components/StepDiagram';
+import { diagrams } from '../data/diagrams';
 
 const Writing = () => {
   const { slug } = useParams();
@@ -64,7 +65,9 @@ const Writing = () => {
           {s.p.map((t, i) => (
             <p key={i} style={{ margin: '0 0 14px', color: muted, fontSize: '16px', lineHeight: 1.75 }}>{t}</p>
           ))}
-          {s.diagram === 'moneyPath' && <MoneyPath />}
+          {s.diagram && diagrams[s.diagram] && (
+            <StepDiagram nodes={diagrams[s.diagram].nodes} steps={diagrams[s.diagram].steps} />
+          )}
         </div>
       ))}
     </section>
