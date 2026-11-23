@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
-import AnimatedBackground from './components/AnimatedBackground';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AskYash from './components/AskYash';
@@ -33,7 +32,6 @@ const AppContent = () => {
           transition: 'background 0.4s ease',
         }}
       >
-        <AnimatedBackground />
         <Navbar />
         <main>
           <ScrollToTop />

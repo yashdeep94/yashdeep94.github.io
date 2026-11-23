@@ -13,6 +13,49 @@ export const personalInfo = {
   github: "https://github.com/yashdeep94",
 };
 
+// ===== WORK =====
+// One line per employer, nelhage.com style. Every claim here is in claims.csv.
+export const work = [
+  {
+    org: "Eisai Inc.",
+    role: "Application Cloud Engineer, Co-op",
+    when: "Jan \u2013 Aug 2026",
+    where: "Cambridge, MA",
+    line: "Took LISA from an idea to a production agentic system on Databricks: a LangGraph loop calling Claude across 17 registered tools, with MLflow tracing behind an admin panel that root-causes a reported answer.",
+  },
+  {
+    org: "Yashdeep Cable Network \u00b7 SS Transline",
+    role: "Software Engineer",
+    when: "Dec 2021 \u2013 Present",
+    where: "Remote",
+    line: "Build and operate the software two small businesses run on, a cable-operator recharge system and a freight billing platform, each replacing paper ledgers.",
+  },
+];
+
+// ===== FEATURED =====
+// One project gets a paragraph; the rest get one line. Nobody puts the full list on a homepage.
+export const featured = {
+  title: "Re-architecting a live business onto serverless AWS",
+  stack: ["Rust", "AWS Lambda", "DynamoDB", "SQS FIFO", "CloudFront", "Terraform"],
+  body: "The cable system had run for years on Django and MySQL, first on a VPS and then on a Linux server I host myself. This year I rebuilt it as Rust services on Lambda behind CloudFront, with DynamoDB keyed from the access patterns rather than from the entities. Money moves in one transactional write that carries the business rows, an outbox record and an idempotency key together, so a retry cannot double-charge. The event path runs DynamoDB Streams into a Rust relay and SQS FIFO lanes, one per provider login, with dead-letter queues and an inbox check on every consumer. All of it is Terraform, with CloudWatch alarms and deploys that assume a role over OIDC instead of storing keys.",
+};
+
+// ===== OTHER PROJECTS =====
+export const otherProjects = [
+  {
+    name: "Self-hosted infrastructure",
+    line: "A 14-service Docker Compose stack on Ubuntu behind an nginx TLS reverse proxy, with Prometheus, Grafana and Loki for observability, and a default-deny firewall, fail2ban and WireGuard.",
+  },
+  {
+    name: "Parallel video action recognition",
+    line: "Trained an I3D model on a 17,124-video subset, cutting wall time from 6,462 to 3,462 seconds with two-GPU PyTorch DDP on SLURM, and compared DDP against FSDP1 and FSDP2.",
+  },
+  {
+    name: "Cloud-native delivery pipeline",
+    line: "Terraform across VPC, EC2 launch templates, RDS, S3, IAM and KMS, with Packer image builds and a test stage gating every pull request to main.",
+  },
+];
+
 // ===== TECHNOLOGIES =====
 export const technologies = [
   {

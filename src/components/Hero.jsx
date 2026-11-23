@@ -1,36 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Github, Linkedin, Mail, ChevronDown, MapPin } from 'lucide-react';
+import { Github, Linkedin, Mail, MapPin } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { personalInfo } from '../data/content';
 import profilePhoto from '../assets/images/portfolio_img.webp';
 
 /* ===== Typing Effect ===== */
-const TypingText = ({ texts }) => {
-  const [idx, setIdx] = useState(0);
-  const [text, setText] = useState('');
-  const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    const cur = texts[idx];
-    const t = setTimeout(() => {
-      if (!deleting) {
-        if (text.length < cur.length) setText(cur.slice(0, text.length + 1));
-        else setTimeout(() => setDeleting(true), 2000);
-      } else {
-        if (text.length > 0) setText(text.slice(0, -1));
-        else { setDeleting(false); setIdx((idx + 1) % texts.length); }
-      }
-    }, deleting ? 40 : 80);
-    return () => clearTimeout(t);
-  }, [text, deleting, idx, texts]);
-
-  return (
-    <span>
-      {text}
-      <span style={{ animation: 'pulse 1s step-end infinite', fontWeight: 300, color: '#6366f1' }}>|</span>
-    </span>
-  );
-};
 
 /* ===== Orbiting Ring ===== */
 const OrbitRing = ({ radius, duration, dk }) => (
@@ -74,9 +48,7 @@ const Hero = () => {
     { icon: Mail, href: `mailto:${personalInfo.email}`, label: 'Email', color: '#ec4899' },
   ];
 
-  const scrollToNext = () => {
-    window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
-  };
+
 
   return (
     <section style={{
@@ -191,11 +163,10 @@ const Hero = () => {
             opacity: 0,
             fontSize: 'clamp(14px, 2.2vw, 20px)', fontWeight: 500,
             fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
-            height: 'clamp(20px, 3vw, 28px)',
             color: dk ? '#a78bfa' : '#6366f1',
           }}
         >
-          <TypingText texts={personalInfo.roles} />
+          {personalInfo.roles.join("  \u00b7  ")}
         </div>
 
         {/* Bio */}
@@ -223,7 +194,7 @@ const Hero = () => {
           }}
         >
           <MapPin size={14} />
-          {personalInfo.location} · open to relocation
+          {personalInfo.location}
         </div>
 
         {/* Social Icons */}
@@ -262,27 +233,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div style={{
-        position: 'absolute', bottom: 'clamp(16px, 3vh, 32px)',
-        width: '100%', display: 'flex', justifyContent: 'center',
-      }}>
-        <button
-          onClick={scrollToNext}
-          className="animate-float"
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: dk ? '#4b5563' : '#6b7280',
-            transition: 'color 0.3s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = '#6366f1'}
-          onMouseLeave={e => e.currentTarget.style.color = dk ? '#4b5563' : '#6b7280'}
-        >
-          <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 500 }}>Scroll</span>
-          <ChevronDown size={18} />
-        </button>
-      </div>
     </section>
   );
 };
