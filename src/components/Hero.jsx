@@ -162,7 +162,7 @@ const Hero = () => {
           style={{
             opacity: 0,
             fontSize: 'clamp(14px, 2.2vw, 20px)', fontWeight: 500,
-            fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+            fontFamily: "'JetBrains Mono', monospace",
             color: dk ? '#a78bfa' : '#6366f1',
           }}
         >

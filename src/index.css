@@ -42,6 +42,21 @@
 html {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  /* MEASURED 2026-11-23: getComputedStyle reported html AND body as rgba(0,0,0,0) at every
+     one of 19 widths. The themed gradient sits on a div inside <AppContent>, so nothing
+     painted the document itself and two things showed through:
+       - overscroll: rubber-banding past the top or bottom on macOS/iOS exposed the
+         browser's default WHITE above the navbar and below the footer, on a dark page;
+       - the native scrollbar gutter and form controls rendered as light-theme.
+     color-scheme fixes the second, the background the first. Duplicated in a <style> in
+     index.html so it also applies before the bundle mounts. */
+  background-color: #f8fafc;
+  color-scheme: light;
+}
+html.dark {
+  background-color: #030712;
+  color-scheme: dark;
 }
 
 /* ⛔ scroll-behavior is NEITHER an animation nor a transition, so a blanket

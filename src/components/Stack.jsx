@@ -35,7 +35,7 @@ const Cell = ({ children, label, dk, labelOnly }) => (
     <span style={{
       fontSize: labelOnly ? 'var(--t-sm)' : 'var(--t-xs)',
       letterSpacing: '0.01em', whiteSpace: 'nowrap',
-      fontFamily: labelOnly ? "'Fira Code','JetBrains Mono',monospace" : undefined,
+      fontFamily: labelOnly ? "'JetBrains Mono',monospace" : undefined,
     }}>
       {label}
     </span>

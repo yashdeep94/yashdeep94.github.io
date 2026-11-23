@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
 // A stepped diagram: N boxes, one caption per step, the active box highlighted. It exists for
@@ -15,20 +15,36 @@ const StepDiagram = ({ nodes, steps }) => {
   const [i, setI] = useState(0);
   const step = steps[i];
 
+  const scroller = useRef(null);
+  const [overflows, setOverflows] = useState(false);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const measure = () => setOverflows(el.scrollWidth > el.clientWidth + 1);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const dim = dk ? '#374151' : '#d1d5db';
   const text = dk ? '#9ca3af' : '#6b7280';
   const on = '#818cf8';
   const strong = dk ? '#e5e7eb' : '#111827';
 
   const n = nodes.length;
-  const W = 660, H = 110, bw = Math.floor((W - 12 * (n - 1)) / n), bh = 46, gap = 12;
+  // W is the viewBox width AND the rendered pixel width, so one unit == one CSS pixel and the
+  // 13px/11px labels draw at their true size instead of being scaled down with the container.
+  // 624 because the prose column saturates at 630px: any wider and the diagram would overflow
+  // its own column at EVERY width and permanently trip the scroll hint below.
+  const W = 624, H = 72, bw = Math.floor((W - 12 * (n - 1)) / n), bh = 46, gap = 12;
   const x = (n) => n * (bw + gap);
 
   return (
     <figure style={{ margin: '0 0 34px' }}>
-      <div style={{ overflowX: 'auto', paddingBottom: '4px' }}>
+      <div ref={scroller} style={{ overflowX: 'auto', paddingBottom: '4px' }}>
         <svg
-          viewBox={`0 0 ${W} ${H}`} width="100%" style={{ minWidth: '560px', display: 'block' }}
+          viewBox={`0 0 ${W} ${H}`} width="100%" style={{ minWidth: `${W}px`, display: 'block' }}
           role="img"
           aria-label={`Step ${i + 1} of ${steps.length}: ${step.title}. ${step.body}`}
         >
@@ -49,15 +65,22 @@ const StepDiagram = ({ nodes, steps }) => {
                   style={{ transition: 'stroke 220ms ease, stroke-width 220ms ease' }}
                 />
                 <text x={x(k) + bw / 2} y={38} textAnchor="middle"
-                  style={{ fontSize: '11px', fontWeight: 600, fill: active ? on : strong,
+                  style={{ fontSize: '13px', fontWeight: 600, fill: active ? on : strong,
                            transition: 'fill 220ms ease' }}>{n.label}</text>
-                <text x={x(k) + bw / 2} y={53} textAnchor="middle"
-                  style={{ fontSize: '9px', fill: text, fontFamily: "'Fira Code',monospace" }}>{n.sub}</text>
+                <text x={x(k) + bw / 2} y={54} textAnchor="middle"
+                  style={{ fontSize: '11px', fill: text, fontFamily: "'JetBrains Mono',monospace" }}>{n.sub}</text>
               </g>
             );
           })}
         </svg>
       </div>
+
+      {overflows && (
+        <div aria-hidden="true" style={{
+          fontSize: '12px', color: text, marginTop: '6px',
+          fontFamily: "'JetBrains Mono',monospace",
+        }}>scroll to see the whole path</div>
+      )}
 
       <div style={{ display: 'flex', gap: '6px', margin: '14px 0 12px', flexWrap: 'wrap' }}>
         {steps.map((s, k) => (

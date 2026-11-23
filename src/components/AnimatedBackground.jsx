@@ -55,7 +55,7 @@ const AnimatedBackground = () => {
             left: `${5 + (i * 7) % 90}%`,
             top: `${10 + (i * 13) % 80}%`,
             fontSize: `${12 + (i % 4) * 4}px`,
-            fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+            fontFamily: "'JetBrains Mono', monospace",
             color: dk ? 'rgba(99,102,241,0.08)' : 'rgba(99,102,241,0.06)',
             fontWeight: 600,
             animationDelay: `${i * 0.7}s`,

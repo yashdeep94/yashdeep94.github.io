@@ -18,18 +18,30 @@
     <meta property="og:url" content="https://yashdeep94.github.io/" />
     
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Yash Darekar | Portfolio" />
-    <meta name="twitter:description" content="Full Stack Developer specializing in cloud computing and machine learning." />
+    <meta name="twitter:description" content="AI platform and backend engineer. Production GenAI agents, serverless AWS in Rust, and the systems two small businesses run on." />
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#111827" />
+    <!-- Theme Color: must match the real background of each theme, not a third colour. -->
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#030712" media="(prefers-color-scheme: dark)" />
   
+    <!-- Painted in the head, not by React: the themed gradient is on a div inside the app,
+         so before the bundle mounts a dark-theme visitor saw a white page. -->
+    <style>html{background-color:#f8fafc}html.dark{background-color:#030712}</style>
+    <script>
+      // Same source of truth as ThemeContext, read before first paint.
+      try {
+        var t = localStorage.getItem('theme') ||
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (t === 'dark') document.documentElement.classList.add('dark');
+      } catch (e) {}
+    </script>
 </head>
   <body>
     <div id="root"></div>

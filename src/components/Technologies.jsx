@@ -129,7 +129,7 @@ const Technologies = () => {
                       style={{
                         padding: '6px 14px', borderRadius: '8px',
                         fontSize: '13px', fontWeight: 500,
-                        fontFamily: "'Fira Code', monospace",
+                        fontFamily: "'JetBrains Mono', monospace",
                         color: dk ? '#d1d5db' : '#374151',
                         background: dk ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                         border: `1px solid ${dk ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,

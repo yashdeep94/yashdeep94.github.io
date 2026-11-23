@@ -14,7 +14,7 @@ const Work = () => {
 
   const H = ({ children }) => (
     <h2 style={{
-      fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.18em',
+      fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.18em',
       fontWeight: 600, color: faint, margin: '0 0 20px',
     }}>{children}</h2>
   );
@@ -80,7 +80,7 @@ const Work = () => {
             <span key={s} style={{
               fontSize: '12px', padding: '3px 9px', borderRadius: '6px',
               border: `1px solid ${rule}`, color: faint,
-              fontFamily: "'Fira Code','JetBrains Mono',monospace",
+              fontFamily: "'JetBrains Mono',monospace",
             }}>{s}</span>
           ))}
         </div>
