@@ -197,7 +197,7 @@ const Hero = () => {
           {personalInfo.location}
         </div>
 
-        {/* Contact line. Deliberately NOT a résumé PDF: every résumé is tailored per application,
+        {/* Contact line. Deliberately NOT a resume PDF: every resume is tailored per application,
             so a static one on the site would go stale the moment the master changes (today's would
             still read "Freelance / Sep 2022"). The visible address plus "on request" gives a cold
             visitor a conversion path without that staleness, and keeps the tailoring intact.
@@ -214,7 +214,7 @@ const Hero = () => {
             style={{ color: dk ? '#a78bfa' : '#6366f1', textDecoration: 'none',
                      borderBottom: `1px solid ${dk ? '#a78bfa40' : '#6366f140'}` }}
           >{personalInfo.email}</a>
-          <span style={{ opacity: 0.75 }}>{'  \u00b7  résumé on request'}</span>
+          <span style={{ opacity: 0.75 }}>{'  \u00b7  resume on request'}</span>
         </div>
 
         {/* Social Icons */}

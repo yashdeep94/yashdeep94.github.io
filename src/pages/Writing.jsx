@@ -65,6 +65,16 @@ const Writing = () => {
           {s.p.map((t, i) => (
             <p key={i} style={{ margin: '0 0 14px', color: muted, fontSize: '16px', lineHeight: 1.75 }}>{t}</p>
           ))}
+          {s.code && (
+            <pre style={{
+              margin: '0 0 var(--s-4)', padding: 'var(--s-4)', borderRadius: '8px',
+              overflowX: 'auto', fontSize: 'var(--t-sm)', lineHeight: 1.6,
+              fontFamily: "'JetBrains Mono','Fira Code',monospace",
+              background: dk ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+              border: `1px solid ${dk ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
+              color: dk ? '#d1d5db' : '#374151',
+            }}><code>{s.code}</code></pre>
+          )}
           {s.diagram && diagrams[s.diagram] && (
             <StepDiagram nodes={diagrams[s.diagram].nodes} steps={diagrams[s.diagram].steps} />
           )}

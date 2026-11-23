@@ -170,10 +170,38 @@ export const writing = [
       {
         h: 'Money, and the part that is actually hard',
         diagram: 'moneyPath',
+        code: `// The idempotency contract, in the only place it can live.
+// DynamoDB cancels the transaction when the key already exists, so the
+// "already happened" case is a NORMAL return, not an error path.
+match self.db.transact_write_items()
+    .set_transact_items(Some(items))   // business rows + outbox + key
+    .send().await
+{
+    Ok(_) => Ok(Inserted::New),
+    Err(e) if is_cancelled(&e) => {
+        let stored = self.get_from(&self.core, credit_pk(&credit.id), "META", true).await?
+            .ok_or_else(|| Self::fail(e))?;
+        Ok(Inserted::Existing { status: credit_status(&stored)?, .. })
+    }
+}`,
         p: [
           'Recharges are the only place where a mistake is expensive, because the money leaves before the record is written. A business row, an outbox record and an idempotency key are written in one transaction, so a retried request cannot charge a customer twice.',
           'Jobs reach the worker through DynamoDB Streams into a relay, then SQS FIFO with the message group set to the provider login. That keeps one money job per login in flight at a time, which is a property of the upstream portal rather than of my system. Dead-letter queues catch the rest, and every consumer records a message id before it acts.',
           'The failure I spent the most time on is SQS redelivering a money job that already ran. A queue is a doorbell, not the truth: the worker claims a job with a conditional update, and a redelivered job is routed through the same check the system already used for ambiguous outcomes.',
+        ],
+      },
+      {
+        h: 'The lane is two lines',
+        code: `// One ordered lane per provider login. The group id IS the constraint:
+// SQS will not deliver a second message for a lane while one is in flight.
+self.client.send_message()
+    .queue_url(&self.url)
+    .message_group_id(&bell.lane)          // the provider login
+    .message_deduplication_id(&bell.dedup)
+    .message_body(bell.body())
+    .send().await`,
+        p: [
+          'Everything about ordering reduces to the group id. It is the portal\'s constraint expressed as one argument, which is the part I find satisfying: the rule lives in the queue rather than in a lock I would have had to write, test and then get wrong at 2am.',
         ],
       },
       {
