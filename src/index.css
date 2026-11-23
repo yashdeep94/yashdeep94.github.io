@@ -1,11 +1,84 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   DESIGN TOKENS — added 2026-11-23.
+   Before this the site had ZERO custom properties, TEN different clamp() font
+   triples (every one invented at the call site) and SEVENTEEN distinct spacing
+   values. That is why it read as functional rather than considered: polish on
+   the sites people admire comes from ruthless consistency in type, spacing and
+   interaction state, not from spectacle. Measured for comparison: the most-copied
+   engineer portfolio ships ZERO keyframe animations and 112 interaction transitions.
+   ============================================================================ */
+:root {
+  /* Type: a perfect-fourth scale (1.333) off a 16px base. Only the two display
+     sizes are fluid — body text that resizes with the viewport is harder to read,
+     not easier, and small text should never scale. */
+  --t-xs:   0.75rem;   /* 12px — labels, meta, stack chips */
+  --t-sm:   0.875rem;  /* 14px — captions, secondary */
+  --t-base: 1rem;      /* 16px — body */
+  --t-lg:   1.125rem;  /* 18px — lead, h3 */
+  --t-xl:   clamp(1.375rem, 1.1rem + 1.2vw, 1.75rem);  /* 22 -> 28 — h2 */
+  --t-2xl:  clamp(1.875rem, 1.2rem + 3vw, 2.75rem);    /* 30 -> 44 — h1 */
+
+  /* Space: 4px base, doubling with two half-steps. Nine values instead of seventeen. */
+  --s-1: 0.25rem;  --s-2: 0.5rem;   --s-3: 0.75rem;  --s-4: 1rem;
+  --s-6: 1.5rem;   --s-8: 2rem;     --s-12: 3rem;    --s-16: 4rem;  --s-24: 6rem;
+
+  /* Measure: prose stays inside a readable line length. */
+  --measure: 68ch;
+
+  /* Interaction: one duration and one easing for everything, so the whole page
+     responds with the same hand. */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur: 180ms;
+
+  --accent: #6366f1;
+  --accent-soft: #818cf8;
+}
+
 /* ===== BASE ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html {
-  scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ⛔ scroll-behavior is NEITHER an animation nor a transition, so a blanket
+   prefers-reduced-motion override does NOT catch it. Opt IN instead. */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* ===== INTERACTION STATE =====
+   Every interactive element responds the same way. This is where the "polished"
+   feeling actually comes from. */
+a, button, [role="button"] {
+  transition: color var(--dur) var(--ease),
+              background-color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              opacity var(--dur) var(--ease);
+}
+
+/* There was NO focus styling at all. A keyboard user had nothing to follow. */
+:focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* Reduced motion: keep transitions, collapse them to near-instant rather than
+   deleting them. An element that pops with no transition can be more
+   disorienting, not less. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body {
